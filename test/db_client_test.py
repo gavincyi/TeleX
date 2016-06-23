@@ -13,7 +13,7 @@ class db_client_test(unittest.TestCase):
         logger = logging.getLogger()
         obj = db_client(logger)
         obj.db_file = os.path.abspath(obj.db_file + "/../telex_test.sqlite")
-        self.assertTrue(obj.init())
+        self.assertTrue(obj.init(True))
 
         # Check if table is created
         obj.cursor.execute('''delete from %s where 1 = 1''' % obj.txn_table_name)

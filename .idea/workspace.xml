@@ -37,7 +37,7 @@
         <entry file="file://$PROJECT_DIR$/test/db_client_test.py">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="48" column="0" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
+              <caret line="15" column="29" selection-start-line="15" selection-start-column="29" selection-end-line="15" selection-end-column="29" />
               <folding>
                 <element signature="e#15#30#0" expanded="true" />
               </folding>
@@ -45,21 +45,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="handler.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="handler.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/handler.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="6.9387755">
-              <caret line="140" column="0" selection-start-line="140" selection-start-column="0" selection-end-line="140" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="10" column="4" selection-start-line="10" selection-start-column="4" selection-end-line="10" selection-end-column="4" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="db_client.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="db_client.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/db_client.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="96" column="0" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.5546875">
+              <caret line="27" column="20" selection-start-line="27" selection-start-column="20" selection-end-line="27" selection-end-column="20" />
               <folding>
                 <element signature="e#15#29#0" expanded="true" />
               </folding>
@@ -82,9 +82,9 @@
         <option value="$PROJECT_DIR$/main.py" />
         <option value="$PROJECT_DIR$/src/Handler.py" />
         <option value="$PROJECT_DIR$/src/main.py" />
-        <option value="$PROJECT_DIR$/test/db_client_test.py" />
         <option value="$PROJECT_DIR$/src/db_client.py" />
         <option value="$PROJECT_DIR$/src/handler.py" />
+        <option value="$PROJECT_DIR$/test/db_client_test.py" />
       </list>
     </option>
   </component>
@@ -138,6 +138,16 @@
               <option name="myItemId" value="TeleX" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="TeleX" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="TeleX" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="test" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
@@ -154,16 +164,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="TeleX" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="TeleX" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -195,7 +195,7 @@
       <recent name="C:\Users\user\Documents\Source Code\TradeHub\src" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main">
+  <component name="RunManager" selected="Python tests.Unittest">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -375,34 +375,34 @@
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Unittest - 2016.06.22 at 22h 02m 39s.xml">
-      <configuration name="Unittest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittest - 2016.06.22 at 22h 03m 06s.xml">
-      <configuration name="Unittest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittest - 2016.06.22 at 22h 03m 32s.xml">
-      <configuration name="Unittest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittest - 2016.06.22 at 22h 07m 02s.xml">
-      <configuration name="Unittest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittest - 2016.06.22 at 22h 41m 07s.xml">
-      <configuration name="Unittest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittest - 2016.06.22 at 22h 51m 17s.xml">
-      <configuration name="Unittest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittest - 2016.06.22 at 22h 51m 32s.xml">
-      <configuration name="Unittest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittest - 2016.06.22 at 23h 01m 27s.xml">
-      <configuration name="Unittest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittest - 2016.06.22 at 23h 02m 52s.xml">
-      <configuration name="Unittest" configurationId="tests" />
-    </history-entry>
     <history-entry file="Unittest - 2016.06.22 at 23h 03m 09s.xml">
+      <configuration name="Unittest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittest - 2016.06.23 at 12h 56m 47s.xml">
+      <configuration name="Unittest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittest - 2016.06.23 at 12h 58m 20s.xml">
+      <configuration name="Unittest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittest - 2016.06.23 at 12h 59m 00s.xml">
+      <configuration name="Unittest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittest - 2016.06.23 at 12h 59m 37s.xml">
+      <configuration name="Unittest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittest - 2016.06.23 at 13h 00m 54s.xml">
+      <configuration name="Unittest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittest - 2016.06.23 at 13h 01m 24s.xml">
+      <configuration name="Unittest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittest - 2016.06.23 at 13h 03m 01s.xml">
+      <configuration name="Unittest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittest - 2016.06.23 at 13h 03m 06s.xml">
+      <configuration name="Unittest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittest - 2016.06.23 at 13h 03m 08s.xml">
       <configuration name="Unittest" configurationId="tests" />
     </history-entry>
   </component>
@@ -416,11 +416,11 @@
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32724252" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32569557" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32569557" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3927987" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3927987" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -448,6 +448,16 @@
           <line>140</line>
           <option name="timeStamp" value="9" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file://$PROJECT_DIR$/test/db_client_test.py</url>
+          <line>44</line>
+          <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file://$PROJECT_DIR$/test/db_client_test.py</url>
+          <line>37</line>
+          <option name="timeStamp" value="12" />
+        </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
@@ -456,7 +466,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="11" />
+      <option name="time" value="14" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -638,31 +648,31 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/db_client.py">
+    <entry file="file://$PROJECT_DIR$/src/handler.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="96" column="0" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
-          <folding>
-            <element signature="e#15#29#0" expanded="true" />
-          </folding>
+          <caret line="10" column="4" selection-start-line="10" selection-start-column="4" selection-end-line="10" selection-end-column="4" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/test/db_client_test.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="48" column="0" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
+          <caret line="15" column="29" selection-start-line="15" selection-start-column="29" selection-end-line="15" selection-end-column="29" />
           <folding>
             <element signature="e#15#30#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/handler.py">
+    <entry file="file://$PROJECT_DIR$/src/db_client.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="6.9387755">
-          <caret line="140" column="0" selection-start-line="140" selection-start-column="0" selection-end-line="140" selection-end-column="0" />
-          <folding />
+        <state vertical-scroll-proportion="0.5546875">
+          <caret line="27" column="20" selection-start-line="27" selection-start-column="20" selection-end-line="27" selection-end-column="20" />
+          <folding>
+            <element signature="e#15#29#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
