@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.idea/
+src/__pycache__/
+test/__pycache__/
 
 # C extensions
 *.so
@@ -88,5 +91,4 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# Pycharm
-.idea/
+
