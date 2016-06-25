@@ -5,6 +5,7 @@ __pycache__/
 .idea/
 src/__pycache__/
 test/__pycache__/
+production/
 
 # C extensions
 *.so

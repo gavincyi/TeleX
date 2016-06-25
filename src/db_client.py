@@ -5,9 +5,12 @@ import os
 import datetime
 
 class db_client():
-    def __init__(self, logger):
+    def __init__(self, logger, conf = None):
         self.logger = logger
-        self.db_file = os.path.abspath(__file__ + "/../../db/telex.sqlite")
+        if not conf or len(conf.db_path) == 0:
+            self.db_file = os.path.abspath(__file__ + "/../../db/telex.sqlite")
+        else:
+            self.db_file = conf.db_path
 
         # const
         self.txn_table_name = 'txn'
@@ -23,10 +26,13 @@ class db_client():
 
         # Create tables`
         self.cursor.execute(self.create_txn_table_sql)
+        self.logger.info('Table %s is created' % self.txn_table_name)
 
         # During cold start
         if cold_start:
+            self.logger.info('Database is cold started')
             self.cursor.execute(self.create_txn_index_sql)
+            self.logger.info('Table %s index is created' % self.txn_table_name)
 
         self.conn.commit()
 

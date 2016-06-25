@@ -1,0 +1,4 @@
+api_token: '12345678'
+channel_name: 'TestingChannel'
+log_path: '/./../../log/'
+log_prefix: 'telex_test'

@@ -2,11 +2,12 @@
 from src.db_client import txn
 
 class handler:
-    def __init__(self, logger):
+    def __init__(self, logger, conf):
         self.logger = logger
+        self.conf = conf
         self.session = 0
+        self.channel_name = conf.channel_name
         self.id = 0
-        self.id_map = {}
 
     @staticmethod
     def query_handler_name():
@@ -28,17 +29,16 @@ class handler:
                                              "inid",
                                              "session = %d" % self.session,
                                              "session desc, inid desc")
-        if not row[0]:
+        if row is None or not row[0]:
             self.id = 0
         else:
             self.id = row[0]
 
         self.logger.info("Current Id = %d" % self.id)
 
-    def start_handler(self, logger, bot, update):
+    def start_handler(self, bot, update):
         """
         Start handler
-        :param logger: Logger
         :param bot: Callback bot
         :param update: Callback update
         """
@@ -72,10 +72,9 @@ class handler:
         bot.sendMessage(update.message.chat_id,
                         text=print_out)
 
-    def query_handler(self, logger, bot, update):
+    def query_handler(self, bot, update):
         """
         Query handler
-        :param logger: Logger
         :param bot: Callback bot
         :param update: Callback update
         """
@@ -92,20 +91,19 @@ class handler:
         print_out = ["Query <%d>"%self.id,
                      "ChatId: %s"%update.message.chat_id,
                      update.message.text.replace("/%s"%handler.query_handler_name(), '').strip()]
-        logger.info("\n" + ("\n".join(print_out)))
+        self.logger.info("\n" + ("\n".join(print_out)))
 
         # Acknowledge the demand
         bot.sendMessage(update.message.chat_id,
                         text="\n".join(print_out))
 
         # Broadcast it in the channel
-        bot.sendMessage('@TradeHubTestChannel',
+        bot.sendMessage(self.channel_name,
                         text="%s\n%s"%(print_out[0], print_out[2]))
 
-    def response_handler(self, logger, bot, update):
+    def response_handler(self, bot, update):
         """
         Response handler
-        :param logger: Logger
         :param bot: Callback bot
         :param update: Callback update
         """
@@ -146,11 +144,10 @@ class handler:
         bot.sendMessage(update.message.chat_id,
                         text="Response <%d> is sent." % self.id)
 
-    def help_handler(self, logger, bot, update):
+    def help_handler(self, bot, update):
         """
         Help handler
-        :param logger: Logger
         :param bot: Callback bot
         :param update: Callback update
         """
-        logger.info("Not yet implemented")
+        self.logger.info("Not yet implemented")
