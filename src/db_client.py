@@ -7,10 +7,7 @@ import datetime
 class db_client():
     def __init__(self, logger, conf = None):
         self.logger = logger
-        if not conf or len(conf.db_path) == 0:
-            self.db_file = os.path.abspath(__file__ + "/../../db/telex.sqlite")
-        else:
-            self.db_file = conf.db_path
+        self.db_file = conf.db_path
 
         # const
         self.txn_table_name = 'txn'

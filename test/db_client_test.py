@@ -4,6 +4,7 @@ import unittest
 import logging
 import os
 from src.db_client import db_client, txn
+from src.config import config
 
 class db_client_test(unittest.TestCase):
     def test_init(self):
@@ -11,8 +12,8 @@ class db_client_test(unittest.TestCase):
         logging.basicConfig(level=logging.INFO,
                             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         logger = logging.getLogger()
-        obj = db_client(logger)
-        obj.db_file = os.path.abspath(obj.db_file + "/../telex_test.sqlite")
+        conf = config(os.path.abspath(__file__ + "/../../test/config_test.yaml"))
+        obj = db_client(logger, conf)
 
         if os.path.isfile(obj.db_file):
             os.remove(obj.db_file)
