@@ -7,7 +7,7 @@ from src.config import config
 
 class config_test(unittest.TestCase):
     def test_constructor(self):
-        conf = config(__file__+ "/../../test/config_test.yaml")
+        conf = config(os.path.abspath(__file__+ "/../../test/config_test.yaml"))
         self.assertEqual(conf.mode, 'NORMAL')
         self.assertEqual(conf.api_token, '12345678')
         self.assertEqual(conf.channel_name, 'TestingChannel')
