@@ -10,7 +10,7 @@ python:
   - "nightly" # currently points to 3.6-dev
 # command to install dependencies
 install: 
-  - pip install python-telegram-bot
+  - pip install -r requirements.txt
 # command to run tests
 script: 
   - nosetests --cover-package=src/
