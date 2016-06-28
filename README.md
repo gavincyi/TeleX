@@ -1,7 +1,7 @@
-# Telex
+# TeleX
 An unofficial Telegram message exchange rebot
 
-![alt tag](https://github.com/gavincyi/Telex/blob/master/doc/flow.jpg)
+![alt tag](https://github.com/gavincyi/TeleX/blob/master/doc/flow.jpg)
 
 ## Objective
 
