@@ -3,7 +3,10 @@
 import unittest
 import logging
 import os
-from src.db_client import db_client, txn
+from src.db_client import db_client
+from src.txn import txn
+from src.user_state import user_state
+from src.message import message
 from src.config import config
 
 class db_client_test(unittest.TestCase):
@@ -20,6 +23,8 @@ class db_client_test(unittest.TestCase):
 
         self.assertTrue(obj.init(True))
 
+        ########################################################################
+        # Txn
         # Check if table is created
         obj.cursor.execute('''delete from %s where 1 = 1''' % obj.txn_table_name)
         txn_record = txn(0, 3, "2345678")
@@ -51,6 +56,37 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(row[4], txn_record.outchatid)
         self.assertEqual(row[5], txn_record.inid)
         self.assertEqual(row[6], txn_record.inchatid)
+
+        ########################################################################
+        # User_stats
+        # Check if table is created
+        obj.cursor.execute('''delete from %s where 1 = 1''' % obj.user_states_table_name)
+        user_state_record = user_state(chat_id='1234', state=user_state.states.START)
+        obj.insert(obj.user_states_table_name, user_state_record.str())
+
+        # Check if the row is inserted
+        row = obj.selectone(obj.user_states_table_name, "*")
+        self.assertEqual(row[0], user_state_record.date)
+        self.assertEqual(row[1], user_state_record.time)
+        self.assertEqual(row[2], user_state_record.chatid)
+        self.assertEqual(row[3], user_state.states.to_str(user_state_record.state))
+        self.assertEqual(user_state.states.from_str(row[3]), user_state_record.state)
+
+        ########################################################################
+        # Messages
+        # Check if table is created
+        obj.cursor.execute('''delete from %s where 1 = 1''' % obj.messages_table_name)
+        message_record = message(session=1, id=10, chat_id='23456')
+        obj.insert(obj.messages_table_name, message_record.str())
+
+        # Check if the row is inserted
+        row = obj.selectone(obj.messages_table_name, "*")
+        self.assertEqual(row[0], message_record.date)
+        self.assertEqual(row[1], message_record.time)
+        self.assertEqual(row[2], message_record.session)
+        self.assertEqual(row[3], message_record.id)
+        self.assertEqual(row[4], message_record.chat_id)
+        self.assertEqual(row[5], message_record.msg)
 
         # Close the connection
         obj.close()

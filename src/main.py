@@ -1,6 +1,6 @@
 #!/bin/python
 
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
 from functools import partial
 from src.handler import handler
 from src.db_client import db_client
@@ -15,7 +15,7 @@ def validate_args():
     is_config = False
     for i in range(0, len(sys.argv)):
         if sys.argv[i] == "COLD":
-            config.mode = "COLD"
+            conf.mode = "COLD"
         elif sys.argv[i] == "-c":
             is_config = True
         elif is_config:
@@ -57,10 +57,14 @@ if __name__ == '__main__':
 
     # Set up telegram bot
     updater = Updater(conf.api_token)
-    updater.dispatcher.add_handler(CommandHandler('start', partial(msg_handler.start_handler)))
-    updater.dispatcher.add_handler(CommandHandler(handler.query_handler_name(), partial(msg_handler.query_handler)))
-    updater.dispatcher.add_handler(CommandHandler(handler.response_handler_name(), partial(msg_handler.response_handler)))
-    updater.dispatcher.add_handler(CommandHandler(handler.help_handler_name(), partial(msg_handler.help_handler)))
+    updater.dispatcher.add_handler(CommandHandler('start', msg_handler.start_handler))
+    updater.dispatcher.add_handler(CommandHandler(handler.query_handler_name(), msg_handler.query_handler))
+    updater.dispatcher.add_handler(CommandHandler(handler.response_handler_name(), msg_handler.response_handler))
+    updater.dispatcher.add_handler(CommandHandler(handler.help_handler_name(), msg_handler.help_handler))
+    updater.dispatcher.add_handler(CommandHandler(handler.yes_handler_name(), msg_handler.yes_handler))
+    updater.dispatcher.add_handler(CommandHandler(handler.no_handler_name(), msg_handler.no_handler))
+    updater.dispatcher.add_handler(CommandHandler(handler.back_handler_name(), msg_handler.no_handler))
+    updater.dispatcher.add_handler(MessageHandler([Filters.text], msg_handler.set_value_handler))
 
     logger.info("Polling is started")
     updater.start_polling()

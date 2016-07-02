@@ -1,15 +1,17 @@
 #!/bin/python
 
 import sqlite3
-import os
-import datetime
 
 class db_client():
+    """
+    Simple sqlite database client
+    """
     def __init__(self, logger, conf = None):
         self.logger = logger
         self.db_file = conf.db_path
+        self.cold = conf.mode == 'COLD'
 
-        # const
+        # txn
         self.txn_table_name = 'txn'
         self.create_txn_table_sql = \
              '''create table if not exists %s (date text, time text, session int, outid int, outchatid text, inid int, inchatid text)'''\
@@ -17,7 +19,23 @@ class db_client():
         self.create_txn_index_sql = \
              '''create unique index %s_idx on %s(session, inid)''' % (self.txn_table_name, self.txn_table_name)
 
-    def init(self, cold_start = False):
+        # user_states
+        self.user_states_table_name = 'user_states'
+        self.create_user_states_table_sql = \
+            '''create table if not exists %s (date text, time text, chatid text, state text)''' \
+            % self.user_states_table_name
+        self.create_user_states_index_sql = \
+            '''create unique index %s_idx on %s(chatid)''' % (self.user_states_table_name, self.user_states_table_name)
+
+        # messages
+        self.messages_table_name = 'messages'
+        self.create_messages_table_sql = \
+            '''create table if not exists %s (date text, time text, session int, id int, chatid text, msg text)''' \
+            % self.messages_table_name
+        self.create_messages_index_sql = \
+            '''create unique index %s_idx on %s(id,chatid)''' % (self.messages_table_name, self.messages_table_name)
+
+    def init(self):
         self.conn = sqlite3.connect(self.db_file, check_same_thread=False)
         self.cursor = self.conn.cursor()
 
@@ -25,11 +43,24 @@ class db_client():
         self.cursor.execute(self.create_txn_table_sql)
         self.logger.info('Table %s is created' % self.txn_table_name)
 
+        self.cursor.execute(self.create_user_states_table_sql)
+        self.logger.info('Table %s is created' % self.user_states_table_name)
+
+        self.cursor.execute(self.create_messages_table_sql)
+        self.logger.info('Table %s is created' % self.create_messages_table_sql)
+
         # During cold start
-        if cold_start:
+        if self.cold:
             self.logger.info('Database is cold started')
+
             self.cursor.execute(self.create_txn_index_sql)
             self.logger.info('Table %s index is created' % self.txn_table_name)
+
+            self.cursor.execute(self.create_user_states_index_sql)
+            self.logger.info('Table %s index is created' % self.user_states_table_name)
+
+            self.cursor.execute(self.create_messages_index_sql)
+            self.logger.info('Table %s index is created' % self.messages_table_name)
 
         self.conn.commit()
 
@@ -65,36 +96,4 @@ class db_client():
         self.conn.close()
         return True
 
-class txn():
-    def __init__(self, session, inid, inchatid):
-        curr_datetime = datetime.datetime.now()
-        self.date = curr_datetime.strftime("%Y%m%d")
-        self.time = curr_datetime.strftime("%H:%M:%S.%f %z")
-        self.session = session
-        self.inid = inid
-        self.inchatid = inchatid
-        self.outid = 0
-        self.outchatid = ''
-
-    def str(self):
-        out = "'%s','%s',%d,%d,'%s',%d,'%s'" % \
-                (self.date, self.time, self.session, self.outid, \
-                 self.outchatid, self.inid, self.inchatid)
-        return out
-
-    @staticmethod
-    def outid_index():
-        return 3
-
-    @staticmethod
-    def outchatid_index():
-        return 4
-
-    @staticmethod
-    def inid_index():
-        return 5
-
-    @staticmethod
-    def inchatid_index():
-        return 6
 
