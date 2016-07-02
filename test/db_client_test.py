@@ -16,12 +16,13 @@ class db_client_test(unittest.TestCase):
                             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         logger = logging.getLogger()
         conf = config(os.path.abspath(__file__ + "/../../test/config_test.yaml"))
+        conf.mode = 'COLD'
         obj = db_client(logger, conf)
 
         if os.path.isfile(obj.db_file):
             os.remove(obj.db_file)
 
-        self.assertTrue(obj.init(True))
+        self.assertTrue(obj.init())
 
         ########################################################################
         # Txn
