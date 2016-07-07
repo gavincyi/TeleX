@@ -77,6 +77,8 @@ class user_state:
             self.chatid = dbrow[2]
             self.state = user_state.states.from_str(dbrow[3])
 
+        self.prev_state = user_state.states.UNDEF
+
     def str(self):
         out = "'%s','%s','%s','%s'" % \
               (self.date, self.time, self.chatid, user_state.states.to_str(self.state))

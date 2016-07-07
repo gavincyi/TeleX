@@ -29,8 +29,8 @@ class db_client_test(unittest.TestCase):
         # Check if table is created
         obj.cursor.execute('''delete from %s where 1 = 1''' % obj.txn_table_name)
         txn_record = txn(0, 3, "2345678")
-        txn_record.outid = 2
-        txn_record.outchatid = "1234567"
+        txn_record.out_id = 2
+        txn_record.out_chat_id = "1234567"
         obj.insert(obj.txn_table_name, txn_record.str())
 
         # Check if the row is inserted
@@ -38,14 +38,14 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(row[0], txn_record.date)
         self.assertEqual(row[1], txn_record.time)
         self.assertEqual(row[2], txn_record.session)
-        self.assertEqual(row[3], txn_record.outid)
-        self.assertEqual(row[4], txn_record.outchatid)
-        self.assertEqual(row[5], txn_record.inid)
-        self.assertEqual(row[6], txn_record.inchatid)
+        self.assertEqual(row[3], txn_record.out_id)
+        self.assertEqual(row[4], txn_record.out_chat_id)
+        self.assertEqual(row[5], txn_record.in_id)
+        self.assertEqual(row[6], txn_record.in_chat_id)
 
         # Update the row
-        txn_record.outid = 5
-        txn_record.outchatid = "0000001"
+        txn_record.out_id = 5
+        txn_record.out_chat_id = "0000001"
         obj.insert_or_replace(obj.txn_table_name, txn_record.str())
 
         # Check if the row is updated
@@ -53,10 +53,10 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(row[0], txn_record.date)
         self.assertEqual(row[1], txn_record.time)
         self.assertEqual(row[2], txn_record.session)
-        self.assertEqual(row[3], txn_record.outid)
-        self.assertEqual(row[4], txn_record.outchatid)
-        self.assertEqual(row[5], txn_record.inid)
-        self.assertEqual(row[6], txn_record.inchatid)
+        self.assertEqual(row[3], txn_record.out_id)
+        self.assertEqual(row[4], txn_record.out_chat_id)
+        self.assertEqual(row[5], txn_record.in_id)
+        self.assertEqual(row[6], txn_record.in_chat_id)
 
         ########################################################################
         # User_stats

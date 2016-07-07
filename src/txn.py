@@ -8,29 +8,34 @@ class txn():
         self.date = curr_datetime.strftime("%Y%m%d")
         self.time = curr_datetime.strftime("%H:%M:%S.%f %z")
         self.session = session
-        self.inid = inid
-        self.inchatid = inchatid
-        self.outid = 0
-        self.outchatid = ''
+        self.in_id = inid
+        self.in_chat_id = inchatid
+        self.out_id = 0
+        self.out_chat_id = ''
 
     def str(self):
         out = "'%s','%s',%d,%d,'%s',%d,'%s'" % \
-              (self.date, self.time, self.session, self.outid, \
-               self.outchatid, self.inid, self.inchatid)
+              (self.date, self.time, self.session, self.out_id, \
+               self.out_chat_id, self.in_id, self.in_chat_id)
         return out
 
     @staticmethod
-    def outid_index():
+    def out_id_index():
         return 3
 
     @staticmethod
-    def outchatid_index():
+    def out_chat_id_index():
         return 4
 
     @staticmethod
-    def inid_index():
+    def in_id_index():
         return 5
 
     @staticmethod
-    def inchatid_index():
+    def in_chat_id_index():
         return 6
+
+
+
+
+
