@@ -3,13 +3,14 @@
 import unittest
 import logging
 import os
+import sys
 from src.user_state import user_state
 
 class user_state_test(unittest.TestCase):
     def test_query_state(self):
         s = user_state('12345', user_state.states.START)
 
-        print_callback = lambda : print("Undefined behaviour")
+        print_callback = lambda : sys.stdout.write("Undefined behaviour")
 
         # Query
         s.jump(user_state.transitions.QUERYING, print_callback)
