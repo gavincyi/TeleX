@@ -85,6 +85,11 @@ class user_state:
         return out
 
     def jump(self, trans, undef_callback=None):
+        """
+        Transite the state
+        :param trans: Transition
+        :param undef_callback: Callback function if the state is undefined
+        """
         if self.state not in user_state.graph.keys():
             self.state = self.states.UNDEF
         else:
@@ -98,6 +103,39 @@ class user_state:
         if self.state == self.states.UNDEF and undef_callback:
             undef_callback()
             self.state = self.states.START
-
+            
+    @staticmethod
+    def from_user_state_record(record, set_curr_time = True):
+        """
+        Convert a db record to a user_state record
+        :param record: Database record
+        :param set_curr_time: Indicate if current date and time is set
+        """
+        if not record:
+            ret = user_state()
+        else:
+            ret = user_state(chat_id=record[user_state.chat_id_index()],
+                             state=user_state.states.from_str(record[user_state.state_index()]))
+            if not set_curr_time:
+                ret.date = record[user_state.date_index()]
+                ret.time = record[user_state.time_index()]
+            
+            return ret
+    
+    @staticmethod
+    def date_index():
+        return 0
+            
+    @staticmethod
+    def time_index():
+        return 1
+            
+    @staticmethod
+    def chat_id_index():
+        return 2
+            
+    @staticmethod
+    def state_index():
+        return 3        
 
 

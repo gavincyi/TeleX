@@ -35,13 +35,15 @@ class db_client_test(unittest.TestCase):
 
         # Check if the row is inserted
         row = obj.selectone(obj.txn_table_name, "*")
-        self.assertEqual(row[0], txn_record.date)
-        self.assertEqual(row[1], txn_record.time)
-        self.assertEqual(row[2], txn_record.session)
-        self.assertEqual(row[3], txn_record.out_id)
-        self.assertEqual(row[4], txn_record.out_chat_id)
-        self.assertEqual(row[5], txn_record.in_id)
-        self.assertEqual(row[6], txn_record.in_chat_id)
+        txn_record_from_row = txn.from_txn_record(row, False)
+        
+        self.assertEqual(txn_record_from_row.date, txn_record.date)
+        self.assertEqual(txn_record_from_row.time, txn_record.time)
+        self.assertEqual(txn_record_from_row.session, txn_record.session)
+        self.assertEqual(txn_record_from_row.out_id, txn_record.out_id)
+        self.assertEqual(txn_record_from_row.out_chat_id, txn_record.out_chat_id)
+        self.assertEqual(txn_record_from_row.in_id, txn_record.in_id)
+        self.assertEqual(txn_record_from_row.in_chat_id, txn_record.in_chat_id)
 
         # Update the row
         txn_record.out_id = 5
@@ -50,13 +52,23 @@ class db_client_test(unittest.TestCase):
 
         # Check if the row is updated
         row = obj.selectone(obj.txn_table_name, "*")
-        self.assertEqual(row[0], txn_record.date)
-        self.assertEqual(row[1], txn_record.time)
-        self.assertEqual(row[2], txn_record.session)
-        self.assertEqual(row[3], txn_record.out_id)
-        self.assertEqual(row[4], txn_record.out_chat_id)
-        self.assertEqual(row[5], txn_record.in_id)
-        self.assertEqual(row[6], txn_record.in_chat_id)
+        txn_record_from_row = txn.from_txn_record(row, False)
+        
+        self.assertEqual(txn_record_from_row.date, txn_record.date)
+        self.assertEqual(txn_record_from_row.time, txn_record.time)
+        self.assertEqual(txn_record_from_row.session, txn_record.session)
+        self.assertEqual(txn_record_from_row.out_id, txn_record.out_id)
+        self.assertEqual(txn_record_from_row.out_chat_id, txn_record.out_chat_id)
+        self.assertEqual(txn_record_from_row.in_id, txn_record.in_id)
+        self.assertEqual(txn_record_from_row.in_chat_id, txn_record.in_chat_id)
+        
+        row = obj.selectone(obj.txn_table_name, "*", "inid = 10000")
+        txn_record_from_row = txn.from_txn_record(row, False)
+        self.assertEqual(txn_record_from_row.session, 0)
+        self.assertEqual(txn_record_from_row.out_id, 0)
+        self.assertEqual(txn_record_from_row.out_chat_id, '')
+        self.assertEqual(txn_record_from_row.in_id, 0)
+        self.assertEqual(txn_record_from_row.in_chat_id, '')        
 
         ########################################################################
         # User_stats
@@ -67,11 +79,11 @@ class db_client_test(unittest.TestCase):
 
         # Check if the row is inserted
         row = obj.selectone(obj.user_states_table_name, "*")
-        self.assertEqual(row[0], user_state_record.date)
-        self.assertEqual(row[1], user_state_record.time)
-        self.assertEqual(row[2], user_state_record.chatid)
-        self.assertEqual(row[3], user_state.states.to_str(user_state_record.state))
-        self.assertEqual(user_state.states.from_str(row[3]), user_state_record.state)
+        user_state_record_from_row = user_state.from_user_state_record(row, False)
+        self.assertEqual(user_state_record_from_row.date, user_state_record.date)
+        self.assertEqual(user_state_record_from_row.time, user_state_record.time)
+        self.assertEqual(user_state_record_from_row.chatid, user_state_record.chatid)
+        self.assertEqual(user_state_record_from_row.state, user_state_record.state)
 
         ########################################################################
         # Messages
@@ -82,12 +94,13 @@ class db_client_test(unittest.TestCase):
 
         # Check if the row is inserted
         row = obj.selectone(obj.messages_table_name, "*")
-        self.assertEqual(row[0], message_record.date)
-        self.assertEqual(row[1], message_record.time)
-        self.assertEqual(row[2], message_record.session)
-        self.assertEqual(row[3], message_record.id)
-        self.assertEqual(row[4], message_record.chat_id)
-        self.assertEqual(row[5], message_record.msg)
+        message_record_from_row = message.from_message_record(row, False)
+        self.assertEqual(message_record_from_row.date, message_record.date)
+        self.assertEqual(message_record_from_row.time, message_record.time)
+        self.assertEqual(message_record_from_row.session, message_record.session)
+        self.assertEqual(message_record_from_row.id, message_record.id)
+        self.assertEqual(message_record_from_row.chat_id, message_record.chat_id)
+        self.assertEqual(message_record_from_row.msg, message_record.msg)
 
         # Close the connection
         obj.close()
