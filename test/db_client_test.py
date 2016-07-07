@@ -82,7 +82,7 @@ class db_client_test(unittest.TestCase):
         user_state_record_from_row = user_state.from_user_state_record(row, False)
         self.assertEqual(user_state_record_from_row.date, user_state_record.date)
         self.assertEqual(user_state_record_from_row.time, user_state_record.time)
-        self.assertEqual(user_state_record_from_row.chatid, user_state_record.chatid)
+        self.assertEqual(user_state_record_from_row.chat_id, user_state_record.chat_id)
         self.assertEqual(user_state_record_from_row.state, user_state_record.state)
 
         ########################################################################
