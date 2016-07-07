@@ -69,19 +69,21 @@ class user_state:
         curr_datetime = datetime.datetime.now()
         self.date = curr_datetime.strftime("%Y%m%d")
         self.time = curr_datetime.strftime("%H:%M:%S.%f %z")
+        self.chat_id = ''
+        self.state = user_state.states.UNDEF
 
         if not dbrow:
-            self.chatid = chat_id
+            self.chat_id = chat_id
             self.state = state
         else:
-            self.chatid = dbrow[2]
+            self.chat_id = dbrow[2]
             self.state = user_state.states.from_str(dbrow[3])
 
         self.prev_state = user_state.states.UNDEF
 
     def str(self):
         out = "'%s','%s','%s','%s'" % \
-              (self.date, self.time, self.chatid, user_state.states.to_str(self.state))
+              (self.date, self.time, self.chat_id, user_state.states.to_str(self.state))
         return out
 
     def jump(self, trans, undef_callback=None):
@@ -120,7 +122,7 @@ class user_state:
                 ret.date = record[user_state.date_index()]
                 ret.time = record[user_state.time_index()]
             
-            return ret
+        return ret
     
     @staticmethod
     def date_index():

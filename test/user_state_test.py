@@ -32,5 +32,24 @@ class user_state_test(unittest.TestCase):
         s.jump(user_state.transitions.NO, print_callback)
         self.assertEqual(s.state, user_state.states.START)
 
+    def test_from_user_state_record(self):
+        user_state_record = user_state(chat_id='45567845',
+                                       state=user_state.states.QUERY_PENDING_MSG)
+        user_state_record.prev_state = user_state.states.START
+        row = user_state_record.str().split(',')
+        row = [e.replace("'", "") if e.find("'") > -1 else int(e) for e in row]
+        user_state_record_from_row = user_state.from_user_state_record(row, False)
+        
+        ## Positive test
+        self.assertEqual(user_state_record.date, user_state_record_from_row.date)
+        self.assertEqual(user_state_record.time, user_state_record_from_row.time)
+        self.assertEqual(user_state_record.chat_id, user_state_record_from_row.chat_id)
+        self.assertEqual(user_state_record.state, user_state_record_from_row.state)
+        
+        ## Negative test
+        user_state_record_from_row = user_state.from_user_state_record(None)
+        self.assertEqual('', user_state_record_from_row.chat_id)
+        self.assertEqual(user_state.states.UNDEF, user_state_record_from_row.state)        
+
 if __name__ == '__main__':
     unittest.main()

@@ -4,7 +4,7 @@ import datetime
 
 
 class message():
-    def __init__(self, session = 0, id = 0, chat_id = ''):
+    def __init__(self, session=0, id=0, chat_id=''):
         curr_datetime = datetime.datetime.now()
         self.date = curr_datetime.strftime("%Y%m%d")
         self.time = curr_datetime.strftime("%H:%M:%S.%f %z")

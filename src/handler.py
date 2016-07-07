@@ -123,7 +123,7 @@ class handler:
         """
         local_chat_id, user_state_record = self.get_user_next_state(bot, update, user_state.transitions.QUERYING)
 
-        if user_state_record.chatid == str(local_chat_id) and \
+        if user_state_record.chat_id == str(local_chat_id) and \
            user_state_record.state == user_state.states.QUERY_PENDING_MSG:
             # Update user state
             self.database_client.insert_or_replace(self.database_client.user_states_table_name,
@@ -144,7 +144,7 @@ class handler:
         """
         local_chat_id, user_state_record = self.get_user_next_state(bot, update, user_state.transitions.RESPONSING)
 
-        if user_state_record.chatid == str(local_chat_id) and \
+        if user_state_record.chat_id == str(local_chat_id) and \
            user_state_record.state == user_state.states.RESPONSE_PENDING_ID:
             # Update user state
             self.database_client.insert_or_replace(self.database_client.user_states_table_name,
@@ -269,7 +269,7 @@ class handler:
         """
         local_chat_id, user_state_record = self.get_user_next_state(bot, update, user_state.transitions.YES)
 
-        if user_state_record.chatid == str(local_chat_id):
+        if user_state_record.chat_id == str(local_chat_id):
             if user_state_record.state == user_state.states.QUERY_PENDING_CONFIRM:
                 self.query_set_value_handler(bot, update, user_state_record)
             elif user_state_record.state == user_state.states.RESPONSE_PENDING_MSG:
