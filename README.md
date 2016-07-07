@@ -3,7 +3,7 @@ An unofficial Telegram message exchange rebot
 
 ![alt tag](https://github.com/gavincyi/TeleX/blob/master/doc/flow.jpg)
 
-## Objective
+### Objective
 
 Telex provides annoymous communication channel to exchange queries and responses in Telegram. 
 
@@ -14,10 +14,61 @@ Telex provides annoymous communication channel to exchange queries and responses
 5. The rebot passes the response back to the customer with another key (the response key)
 6. The customer and agent can communicate under the query and response key
 
-## Functionality
+### Functionality
 
 The following commands are supported in the rebot
-* Query (/r)
-* Response (/q \<id\>)
+* Query 
+  - Query is sent out to the channel
+  - Any subscriber in the channel can response the query through the bot
+* Response 
+  - Response is the private message between two anonymous users.
+  - Agent can reply the reponse by the query ID.
+  - Customer can reply the response by the source ID.
+* Match 
+  - Provide a way to reveal the own identity. 
+  - Identities are revealed only when both agree to match.
+* NoMatch
+  - Terminate the conversation.
+  - If anyone sends "NoMatch" on the query or source ID, the opponent will no longer send message to him.
+
+### Dependency
+The project supports python in version greater or equal to 2.7.
+
+The following python packages are required. Highly recommend to use pip to install them.
+* python-telegram-bot
+* pyyaml
+
+### Installation
+
+1.  Clone the project
+
+  Please clone the project to the corresponding directory.
+
+        ```
+        git clone https://github.com/gavincyi/TeleX.git
+        ```
+
+2.  Install the dependency
+
+        ```
+        pip install python-telegram-bot --upgrade
+        pip install pyyaml --upgrade
+        ```
+
+3.  Configuration
+
+  Set up the config.yaml. For details, please refer to section [Configuration](### Configuration)
+
+### Configuration ###
+
+Items:
+- api_token
+- channel_name
+- log_path
+- db_path
+
+
+
+
 
 
