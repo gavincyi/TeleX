@@ -86,10 +86,8 @@ class handler:
                                              "*",
                                              "chatid=%s"%local_chat_id)
 
-        user_state_record = user_state(dbrow=row)
-        prev_state = user_state_record.state
+        user_state_record = user_state.from_user_state_record(row)
         user_state_record.jump(transition)
-        user_state_record.prev_state = prev_state
 
         return local_chat_id, user_state_record
 
@@ -163,7 +161,7 @@ class handler:
         :param bot: Callback bot
         :param update: Callback update
         """
-        local_chat_id, user_state_record= self.get_user_next_state(bot, update, user_state.transitions.RESPONSING)
+        local_chat_id, user_state_record= self.get_user_next_state(bot, update, user_state.transitions.YES)
 
         if user_state_record.prev_state == user_state.states.QUERY_PENDING_CONFIRM:
             row = self.database_client.selectone(self.database_client.messages_table_name,

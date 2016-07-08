@@ -22,7 +22,7 @@ class db_client():
         # user_states
         self.user_states_table_name = 'user_states'
         self.create_user_states_table_sql = \
-            '''create table if not exists %s (date text, time text, chatid text, state text)''' \
+            '''create table if not exists %s (date text, time text, chatid text, state text, prevstate text, transit text)''' \
             % self.user_states_table_name
         self.create_user_states_index_sql = \
             '''create unique index %s_idx on %s(chatid)''' % (self.user_states_table_name, self.user_states_table_name)

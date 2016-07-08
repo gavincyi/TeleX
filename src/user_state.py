@@ -25,10 +25,22 @@ class user_state:
 
 
     class transitions:
+        UNDEF = 0
         YES = 1
         NO = 2
         QUERYING = 3
         RESPONSING = 4
+
+        @staticmethod
+        def from_str(trans):
+            return user_state.transitions.__dict__[trans]
+
+        @staticmethod
+        def to_str(trans):
+            for key, value in user_state.transitions.__dict__.items():
+                if value == trans:
+                    return key
+            return 'UNDEF'
 
     graph = \
     {
@@ -65,25 +77,24 @@ class user_state:
             }
     }
 
-    def __init__(self, chat_id='', state=0, dbrow=None):
+    def __init__(self, chat_id='', state=0):
         curr_datetime = datetime.datetime.now()
         self.date = curr_datetime.strftime("%Y%m%d")
         self.time = curr_datetime.strftime("%H:%M:%S.%f %z")
-        self.chat_id = ''
-        self.state = user_state.states.UNDEF
-
-        if not dbrow:
-            self.chat_id = chat_id
-            self.state = state
-        else:
-            self.chat_id = dbrow[2]
-            self.state = user_state.states.from_str(dbrow[3])
-
+        self.chat_id = chat_id
+        self.state = state
         self.prev_state = user_state.states.UNDEF
+        self.transition = user_state.transitions.UNDEF
 
     def str(self):
-        out = "'%s','%s','%s','%s'" % \
-              (self.date, self.time, self.chat_id, user_state.states.to_str(self.state))
+        out = "'%s','%s','%s','%s','%s','%s'" % \
+              (self.date, \
+               self.time, \
+               self.chat_id, \
+               user_state.states.to_str(self.state),
+               user_state.states.to_str(self.prev_state),
+               user_state.transitions.to_str(self.transition))
+
         return out
 
     def jump(self, trans, undef_callback=None):
@@ -93,13 +104,18 @@ class user_state:
         :param undef_callback: Callback function if the state is undefined
         """
         if self.state not in user_state.graph.keys():
+            self.prev_state = self.states.UNDEF
+            self.transition = self.transitions.UNDEF
             self.state = self.states.UNDEF
         else:
+            self.prev_state = self.state
             branches = user_state.graph[self.state]
 
             if trans in branches.keys():
+                self.transition = trans
                 self.state = branches[trans]
             else:
+                self.transition = self.transitions.UNDEF
                 self.state = self.states.UNDEF
 
         if self.state == self.states.UNDEF and undef_callback:
@@ -118,6 +134,8 @@ class user_state:
         else:
             ret = user_state(chat_id=record[user_state.chat_id_index()],
                              state=user_state.states.from_str(record[user_state.state_index()]))
+            ret.prev_state = user_state.states.from_str(record[user_state.prev_state_index()])
+            ret.transition = user_state.transitions.from_str(record[user_state.transition_index()])
             if not set_curr_time:
                 ret.date = record[user_state.date_index()]
                 ret.time = record[user_state.time_index()]
@@ -138,6 +156,14 @@ class user_state:
             
     @staticmethod
     def state_index():
-        return 3        
+        return 3
+
+    @staticmethod
+    def prev_state_index():
+        return 4
+
+    @staticmethod
+    def transition_index():
+        return 5
 
 
