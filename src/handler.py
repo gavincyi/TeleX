@@ -335,18 +335,18 @@ class handler:
             self.no_handler(bot, update)
         else:
             if row_valid_response:
-                txn_record = txn(session=self.session, inid=self.id, inchatid=local_chat_id)
+                txn_record = txn(session=self.session, in_id=self.id, in_chat_id=local_chat_id)
                 txn_record.out_id = row_valid_response[txn.out_id_index()]
                 txn_record.out_chat_id = row_valid_response[txn.out_chat_id_index()]
             elif row_valid_query[txn.out_chat_id_index()] != '':
                 txn_record = txn(session=self.session, \
-                                 inid=row_valid_query[txn.in_id_index()], \
-                                 inchatid=row_valid_query[txn.in_chat_id_index()])
+                                 in_id=row_valid_query[txn.in_id_index()], \
+                                 in_chat_id=row_valid_query[txn.in_chat_id_index()])
                 txn_record.out_id = row_valid_query[txn.out_id_index()]
                 txn_record.out_chat_id = row_valid_query[txn.out_chat_id_index()]
             else:
                 self.id += 1
-                txn_record = txn(session=self.session, inid=self.id, inchatid=local_chat_id)
+                txn_record = txn(session=self.session, in_id=self.id, in_chat_id=local_chat_id)
                 txn_record.out_id = row_valid_query[txn.in_id_index()]
                 txn_record.out_chat_id = row_valid_query[txn.in_chat_id_index()]
 

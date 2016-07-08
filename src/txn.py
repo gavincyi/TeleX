@@ -3,15 +3,15 @@
 import datetime
 
 class txn():
-    def __init__(self, session = 0, inid = 0, inchatid = ''):
+    def __init__(self, session=0, in_id=0, in_chat_id='', out_id=0, out_chat_id=''):
         curr_datetime = datetime.datetime.now()
         self.date = curr_datetime.strftime("%Y%m%d")
         self.time = curr_datetime.strftime("%H:%M:%S.%f %z")
         self.session = session
-        self.in_id = inid
-        self.in_chat_id = inchatid
-        self.out_id = 0
-        self.out_chat_id = ''
+        self.in_id = in_id
+        self.in_chat_id = in_chat_id
+        self.out_id = out_id
+        self.out_chat_id = out_chat_id
 
     def str(self):
         out = "'%s','%s',%d,%d,'%s',%d,'%s'" % \
@@ -29,9 +29,11 @@ class txn():
         if not record:
             ret = txn()
         else:
-            ret = txn(record[txn.session_index()], record[txn.in_id_index()], record[txn.in_chat_id_index()])
-            ret.out_id = record[txn.out_id_index()]
-            ret.out_chat_id = record[txn.out_chat_id_index()]
+            ret = txn(session=record[txn.session_index()], 
+                      in_id=record[txn.in_id_index()], 
+                      in_chat_id=record[txn.in_chat_id_index()],
+                      out_id=record[txn.out_id_index()],
+                      out_chat_id=record[txn.out_chat_id_index()])
             if not set_curr_time:
                 ret.date = record[txn.date_index()]
                 ret.time = record[txn.time_index()]

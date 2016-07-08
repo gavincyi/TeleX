@@ -9,10 +9,10 @@ from src.txn import txn
 class txn_test(unittest.TestCase):
     def test_from_txn_record(self):
         txn_record = txn(session=1,
-                         inid=10,
-                         inchatid='689689')
-        txn_record.out_id = 12
-        txn_record.out_chat_id = '444444'
+                         in_id=10,
+                         in_chat_id='689689',
+                         out_id=12,
+                         out_chat_id='444444')
         row = txn_record.str().split(',')
         txn_record_from_row = txn.from_txn_record(row, False)
         

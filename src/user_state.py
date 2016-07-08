@@ -77,14 +77,17 @@ class user_state:
             }
     }
 
-    def __init__(self, chat_id='', state=0):
+    def __init__(self, chat_id='', \
+                       state=states.UNDEF, \
+                       prev_state=states.UNDEF,
+                       transition=transitions.UNDEF):
         curr_datetime = datetime.datetime.now()
         self.date = curr_datetime.strftime("%Y%m%d")
         self.time = curr_datetime.strftime("%H:%M:%S.%f %z")
         self.chat_id = chat_id
         self.state = state
-        self.prev_state = user_state.states.UNDEF
-        self.transition = user_state.transitions.UNDEF
+        self.prev_state = prev_state
+        self.transition = transition
 
     def str(self):
         out = "'%s','%s','%s','%s','%s','%s'" % \
@@ -133,9 +136,9 @@ class user_state:
             ret = user_state()
         else:
             ret = user_state(chat_id=record[user_state.chat_id_index()],
-                             state=user_state.states.from_str(record[user_state.state_index()]))
-            ret.prev_state = user_state.states.from_str(record[user_state.prev_state_index()])
-            ret.transition = user_state.transitions.from_str(record[user_state.transition_index()])
+                             state=user_state.states.from_str(record[user_state.state_index()]),
+                             prev_state=user_state.states.from_str(record[user_state.prev_state_index()]),
+                             transition=user_state.transitions.from_str(record[user_state.transition_index()]))
             if not set_curr_time:
                 ret.date = record[user_state.date_index()]
                 ret.time = record[user_state.time_index()]

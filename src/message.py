@@ -4,14 +4,14 @@ import datetime
 
 
 class message():
-    def __init__(self, session=0, id=0, chat_id=''):
+    def __init__(self, session=0, id=0, chat_id='', msg=''):
         curr_datetime = datetime.datetime.now()
         self.date = curr_datetime.strftime("%Y%m%d")
         self.time = curr_datetime.strftime("%H:%M:%S.%f %z")
         self.session = session
         self.id = id
         self.chat_id = chat_id
-        self.msg = ''
+        self.msg = msg
 
     def str(self):
         out = "'%s','%s',%d,%d,'%s','%s'" % \
