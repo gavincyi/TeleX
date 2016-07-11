@@ -74,7 +74,10 @@ class handler_test(unittest.TestCase):
         update = update_test(chat_id=in_chat_id, text="/start", first_name=first_name)
         hd.start_handler(bot, update)
         self.assertTrue(len(bot.msg_map) > 0)
-        
+
+        # Close the connection
+        db.close()
+
         # Remove the file
         os.remove(db.db_file)        
 
