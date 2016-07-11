@@ -300,7 +300,7 @@ class handler:
         local_chat_id = update.message.chat_id
         row = self.database_client.selectone(self.database_client.messages_table_name,
                                              "*",
-                                             "session = %d and chatid=%s and public=0" % (self.session, local_chat_id),
+                                             "session=%d and chatid=%s and public=0" % (self.session, local_chat_id),
                                              "date desc, time desc")
         message_record = message.from_message_record(row)
 
@@ -402,7 +402,7 @@ class handler:
 
         # Update message
         message_record = message(session=self.session,
-                                 id=self.id,
+                                 id=txn_record.in_id,
                                  chat_id=local_chat_id,
                                  msg='',
                                  public=0)
