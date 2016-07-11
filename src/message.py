@@ -4,7 +4,7 @@ import datetime
 
 
 class message():
-    def __init__(self, session=0, id=0, chat_id='', msg=''):
+    def __init__(self, session=0, id=0, chat_id='', msg='', public=0):
         curr_datetime = datetime.datetime.now()
         self.date = curr_datetime.strftime("%Y%m%d")
         self.time = curr_datetime.strftime("%H:%M:%S.%f %z")
@@ -12,11 +12,12 @@ class message():
         self.id = id
         self.chat_id = chat_id
         self.msg = msg
+        self.public = public
 
     def str(self):
-        out = "'%s','%s',%d,%d,'%s','%s'" % \
+        out = "'%s','%s',%d,%d,'%s','%s',%d" % \
               (self.date, self.time, self.session, self.id,
-               self.chat_id, self.msg)
+               self.chat_id, self.msg, self.public)
         return out
         
     @staticmethod
@@ -31,8 +32,9 @@ class message():
         else:
             ret = message(session=record[message.session_index()],
                           id=record[message.id_index()],
-                          chat_id=record[message.chat_id_index()])
-            ret.msg = record[message.msg_index()]
+                          chat_id=record[message.chat_id_index()],
+                          msg=record[message.msg_index()],
+                          public=record[message.public_index()])
             if not set_curr_time:
                 ret.date = record[message.date_index()]
                 ret.time = record[message.time_index()]
@@ -60,4 +62,8 @@ class message():
             
     @staticmethod
     def msg_index():
-        return 5        
+        return 5
+
+    @staticmethod
+    def public_index():
+        return 6

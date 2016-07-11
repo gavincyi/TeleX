@@ -30,10 +30,10 @@ class db_client():
         # messages
         self.messages_table_name = 'messages'
         self.create_messages_table_sql = \
-            '''create table if not exists %s (date text, time text, session int, id int, chatid text, msg text)''' \
+            '''create table if not exists %s (date text, time text, session int, id int, chatid text, msg text, public int)''' \
             % self.messages_table_name
         self.create_messages_index_sql = \
-            '''create unique index %s_idx on %s(id,chatid)''' % (self.messages_table_name, self.messages_table_name)
+            '''create unique index %s_idx on %s(id,chatid,public)''' % (self.messages_table_name, self.messages_table_name)
 
     def init(self):
         self.conn = sqlite3.connect(self.db_file, check_same_thread=False)
