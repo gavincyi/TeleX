@@ -1,4 +1,5 @@
 #!/bin/python
+from src.channel import channel
 from src.txn import txn
 from src.user_state import user_state
 from src.message import message
@@ -11,7 +12,9 @@ class handler:
         self.conf = conf
         self.session = 0
         self.channel_name = conf.channel_name
-        self.id = 0
+        self.source_id = 0
+        self.channel_id = 0
+        self.message_id = 0
         self.main_keyboard = telegram.ReplyKeyboardMarkup(
                               [['/' + handler.query_handler_name(), '/' + handler.response_handler_name()],
                                ['/' + handler.match_handler_name(), '/' + handler.no_match_handler_name(), '/' + handler.help_handler_name()]])
@@ -59,19 +62,41 @@ class handler:
     def init_db(self, database_client):
         self.database_client = database_client
 
-        # Get the latest id
-        row = self.database_client.selectone(self.database_client.txn_table_name,
+        # Get the latest channel id
+        row = self.database_client.selectone(self.database_client.channels_table_name,
                                              "*",
-                                             "session = %d" % self.session,
-                                             "session desc, inid desc")
-        txn_record = txn.from_txn_record(row)
-
-        if txn_record.session == self.session and self.id > 0:
-            self.id = 0
-        else:
-            self.id = txn_record.in_id
-
-        self.logger.info("Current Id = %d" % self.id)
+                                             orderby="channelid desc")
+        channel_record = channel.from_channel_record(row)
+        self.channel_id = channel_record.channel_id
+        self.logger.info("Channel id = %d" % self.channel_id)
+        
+        # Get the latest message id
+        row = self.database_client.selectone(self.database_client.messages_table_name,
+                                             "*",
+                                             orderby="msgid desc")
+        message_record = message.from_message_record(row)                                             
+        self.message_id = message_record.msg_id
+        self.logger.info("Message id = %d" % self.message_id)
+        
+        # Get the latest source/target id
+        row = self.database_client.selectone(self.database_client.messages_table_name,
+                                             "*",
+                                             orderby="sourceid desc")
+        message_record = message.from_message_record(row)                                             
+        self.source_id = message_record.source_id         
+        self.logger.info("Source id = %d" % self.source_id)
+        
+    def get_next_channel_id(self):
+        self.channel_id += 1
+        return self.channel_id
+        
+    def get_next_message_id(self):
+        self.message_id += 1
+        return self.message_id
+        
+    def get_next_source_id(self):
+        self.source_id += 1
+        return self.source_id        
 
     def get_user_next_state(self, bot, update, transition):
         """
@@ -102,7 +127,9 @@ class handler:
         """
         # Update user state
         local_chat_id = update.message.chat_id
-        us = user_state(local_chat_id, user_state.states.START)
+        us = user_state(chat_id=local_chat_id, 
+                        state=user_state.states.START,
+                        last_channel_id=0)
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,
                                                us.str())
 
@@ -126,7 +153,6 @@ class handler:
 
         if user_state_record.chat_id == str(local_chat_id) and \
            user_state_record.state == user_state.states.QUERY_PENDING_MSG:
-            # Update user state
             self.database_client.insert_or_replace(self.database_client.user_states_table_name,
                                                    user_state_record.str())
             # Send out message
@@ -425,20 +451,35 @@ class handler:
         :param user_state_record: User state object
         """
         local_chat_id = update.message.chat_id
+        question = update.message.text
+        source_id = self.get_next_source_id()
+        channel_id = self.get_next_channel_id()
+        message_id = self.get_next_message_id()
 
-        # Increment id to provide an unique id
-        self.id += 1
+        # Insert the message into database
+        message_record = message(msg_id=message_id,
+                                 channel_id=channel_id,
+                                 source_id=source_id,
+                                 source_chat_id=local_chat_id,
+                                 msg=question)
+        self.database_client.insert(self.database_client.messages_table_name,
+                                    message_record.str())                                 
 
-        # Insert the transaction into database
-        txn_record = txn(self.session, self.id, local_chat_id)
-        self.database_client.insert(self.database_client.txn_table_name,
-                                    txn_record.str())
+        # Insert the channel into database
+        channel_record = channel(channel_id=channel_id,
+                                 target_id=source_id,
+                                 target_chat_id=local_chat_id,
+                                 last_msg_id=message_id,
+                                 public=1,
+                                 live=1)
+        self.database_client.insert(self.database_client.channels_table_name,
+                                    channel_record.str())
 
         # print out
-        question = update.message.text
-        self.logger.info("Query <%d> ChatId <%s>: %s"%(self.id, \
-                                                       update.message.chat_id, \
-                                                       question))
+        self.logger.info(("Source id=%d\n"%source_id) + \
+                         ("Channel id=%d\n"%channel_id) + \
+                         ("Message id=%d\n"%message_id) + \
+                         ("Message=%s\n"%question))
 
         # Update user state
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,

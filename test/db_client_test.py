@@ -131,7 +131,7 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(txn_record_from_row.in_chat_id, '')        
 
         ########################################################################
-        # User_stats
+        # User_states
         # Check if table is created
         obj.cursor.execute('''delete from %s where 1 = 1''' % obj.user_states_table_name)
         user_state_record = user_state(chat_id='1234', 
