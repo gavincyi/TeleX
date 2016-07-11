@@ -52,7 +52,8 @@ class user_state_test(unittest.TestCase):
         user_state_record = user_state(chat_id='45567845',
                                        state=user_state.states.QUERY_PENDING_MSG,
                                        prev_state=user_state.states.START,
-                                       transition=user_state.transitions.QUERYING)
+                                       transition=user_state.transitions.QUERYING,
+                                       last_channel_id=5007)
         row = user_state_record.str().split(',')
         row = [e.replace("'", "") if e.find("'") > -1 else int(e) for e in row]
         user_state_record_from_row = user_state.from_user_state_record(row, False)
@@ -64,6 +65,7 @@ class user_state_test(unittest.TestCase):
         self.assertEqual(user_state_record.state, user_state_record_from_row.state)
         self.assertEqual(user_state_record.prev_state, user_state_record_from_row.prev_state)
         self.assertEqual(user_state_record.transition, user_state_record_from_row.transition)
+        self.assertEqual(user_state_record.last_channel_id, user_state_record_from_row.last_channel_id)
         
         ## Negative test
         user_state_record_from_row = user_state.from_user_state_record(None)
@@ -71,6 +73,7 @@ class user_state_test(unittest.TestCase):
         self.assertEqual(user_state.states.UNDEF, user_state_record_from_row.state) 
         self.assertEqual(user_state.states.UNDEF, user_state_record_from_row.prev_state)
         self.assertEqual(user_state.transitions.UNDEF, user_state_record_from_row.transition)        
+        self.assertEqual(0, user_state_record_from_row.last_channel_id)       
 
 if __name__ == '__main__':
     unittest.main()

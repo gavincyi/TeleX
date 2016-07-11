@@ -4,21 +4,26 @@ import datetime
 
 
 class message():
-    def __init__(self, session=0, id=0, chat_id='', msg='', public=0):
+    def __init__(self, msg_id=0, channel_id=0, source_id=0, source_chat_id='',\
+                 msg=''):
         curr_datetime = datetime.datetime.now()
         self.date = curr_datetime.strftime("%Y%m%d")
         self.time = curr_datetime.strftime("%H:%M:%S.%f %z")
-        self.session = session
-        self.id = id
-        self.chat_id = chat_id
+        self.msg_id = msg_id
+        self.channel_id = channel_id
+        self.source_id = source_id
+        self.source_chat_id = source_chat_id
         self.msg = msg
-        self.public = public
 
     def str(self):
-        out = "'%s','%s',%d,%d,'%s','%s',%d" % \
-              (self.date, self.time, self.session, self.id,
-               self.chat_id, self.msg, self.public)
-        return out
+        return "'%s','%s',%d,%d,%d,'%s','%s'" \
+              % (self.date, \
+                 self.time, \
+                 self.msg_id, \
+                 self.channel_id, \
+                 self.source_id, \
+                 self.source_chat_id, \
+                 self.msg)
         
     @staticmethod
     def from_message_record(record, set_curr_time = True):
@@ -30,15 +35,24 @@ class message():
         if not record:
             ret = message()
         else:
-            ret = message(session=record[message.session_index()],
-                          id=record[message.id_index()],
-                          chat_id=record[message.chat_id_index()],
-                          msg=record[message.msg_index()],
-                          public=record[message.public_index()])
+            ret = message(msg_id=record[message.msg_id_index()],
+                          channel_id=record[message.channel_id_index()],
+                          source_id=record[message.source_id_index()],
+                          source_chat_id=record[message.source_chat_id_index()],
+                          msg=record[message.msg_index()])
             if not set_curr_time:
                 ret.date = record[message.date_index()]
                 ret.time = record[message.time_index()]
         return ret    
+        
+    @staticmethod
+    def field_str():
+        return "date text, time text, msgid int, channelid int, " + \
+               "sourceid int, sourcechatid text, msg text"
+               
+    @staticmethod
+    def key_str():
+        return "msgid"
         
     @staticmethod
     def date_index():
@@ -49,21 +63,21 @@ class message():
         return 1
             
     @staticmethod
-    def session_index():
+    def msg_id_index():
         return 2
             
     @staticmethod
-    def id_index():
+    def channel_id_index():
         return 3
             
     @staticmethod
-    def chat_id_index():
+    def source_id_index():
         return 4
             
     @staticmethod
-    def msg_index():
+    def source_chat_id_index():
         return 5
 
     @staticmethod
-    def public_index():
+    def msg_index():
         return 6
