@@ -1,6 +1,5 @@
 #!/bin/python
 from src.channel import channel
-from src.txn import txn
 from src.user_state import user_state
 from src.message import message
 from src.screen_messages import screen_messages
