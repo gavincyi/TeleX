@@ -193,86 +193,104 @@ class handler:
         local_chat_id, user_state_record= self.get_user_next_state(bot, update, user_state.transitions.YES)
 
         if user_state_record.prev_state == user_state.states.QUERY_PENDING_CONFIRM:
-            row = self.database_client.selectone(self.database_client.messages_table_name,
+            row = self.database_client.selectone(self.database_client.channels_table_name,
                                                  "*",
-                                                 "session = %d and chatid = '%s'" % (self.session, local_chat_id),
-                                                 "date desc, time desc")
-            message_record = message.from_message_record(row)
+                                                 "channelid=%d" % user_state_record.last_channel_id)
+            channel_record = channel.from_channel_record(row)
 
-            if message_record == 0:
-                self.logger.warn("Cannot find message. (session = %d, chatid = %d)" %
-                                 (self.session, local_chat_id))
+            if channel_record.last_msg_id == 0:
+                # Error case of missing record in Channels
+                self.logger.warn("Cannot find channel.\nChannel id = %d\nChat id=%d" \
+                                 % (user_state_record.last_channel_id, local_chat_id))
 
                 # Handle same as "No" for error case
                 self.no_handler(bot, update)
+                return
 
-            else:
-                # Update user state
-                self.database_client.insert_or_replace(self.database_client.user_states_table_name,
-                                                       user_state_record.str())
+            row = self.database_client.selectone(self.database_client.messages_table_name,
+                                                 "*",
+                                                 "msgid=%d" % channel_record.last_msg_id)
+            message_record = message.from_message_record(row)
 
-                # Acknowledge the user
-                bot.sendMessage(local_chat_id,
-                                text="Query %d has sent to channel" % message_record.id)
+            if message_record.source_chat_id != str(local_chat_id):
+                # Error case of missing record in Messages
+                self.logger.warn("Cannot find message.\nMessage id = %d\nChat id=%d" \
+                                 % (channel_record.last_msg_id, local_chat_id))
 
-                # Change the state of the user first
-                self.start_handler(bot, update)
+                # Handle same as "No" for error case
+                self.no_handler(bot, update)
+                return
 
-                # Broadcast it in the channel
-                bot.sendMessage(self.channel_name,
-                                text="Time: %s %s\nSource: %d\nQuery: %s"%
-                                     (message_record.date, \
-                                      message_record.time, \
-                                      message_record.id, \
-                                      message_record.msg))
+            # Update user state
+            self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                                   user_state_record.str())
+
+            # Acknowledge the user
+            bot.sendMessage(local_chat_id,
+                            text="Source %d has sent to channel" % message_record.source_id)
+
+            # Change the state of the user first
+            self.start_handler(bot, update)
+
+            # Broadcast it in the channel
+            bot.sendMessage(self.channel_name,
+                            text="Time: %s %s\nSource ID: %d\nQuery: %s"%
+                                 (message_record.date, \
+                                  message_record.time[:-8], \
+                                  message_record.source_id, \
+                                  message_record.msg))
 
         elif user_state_record.prev_state == user_state.states.RESPONSE_PENDING_CONFIRM:
+            row = self.database_client.selectone(self.database_client.channels_table_name,
+                                                 "*",
+                                                 "channelid=%d" % user_state_record.last_channel_id)
+            channel_record = channel.from_channel_record(row)
+
+            if channel_record.channel_id != user_state_record.last_channel_id or \
+               channel_record.source_chat_id != str(local_chat_id):
+                # Error case for not finding channel id
+                self.logger.warn("Channel id %d / Src id %d is not found." \
+                                 % (user_state_record.last_channel_id, channel_record.source_chat_id))
+                self.no_handler(bot, update)
+                return
+
+            if channel_record.live == 0:
+                # The counterparty has closed the channel
+                bot.sendMessage(local_chat_id,
+                                text="Target ID %d is no longer valid" % channel_record.target_id,
+                                reply_markup=telegram.ReplyKeyboardHide())
+                self.no_handler(bot, update)
+                return
+
             row = self.database_client.selectone(self.database_client.messages_table_name,
                                                  "*",
-                                                 "session = %d and chatid = '%s'" % (self.session, local_chat_id),
-                                                 "date desc, time desc")
+                                                 "msgid=%d" % channel_record.last_msg_id)
             message_record = message.from_message_record(row)
 
-            row = self.database_client.selectone(self.database_client.txn_table_name,
-                                                 "*",
-                                                 "session = %d and inchatid = '%s'" % (self.session,local_chat_id),
-                                                 "date desc, time desc")
-            txn_record = txn.from_txn_record(row)
-
-            if message_record.id == 0 or txn_record.in_id == 0:
-                if message_record.id == 0:
-                    self.logger.warn("Cannot find message. (session = %d, chatid = %d)" %
-                                     (self.session, local_chat_id))
-                if txn_record.in_id == 0:
-                    self.logger.warn("Cannot find txn. (session = %d, inchatid = '%s'" %
-                                     (self.session, local_chat_id))
-
-                # Handle same as "No" for error case
+            if message_record.source_chat_id != str(local_chat_id):
+                # Error case of not finding source id in message
+                self.logger.warn("Src id %d is not found in message" % message_record.source_chat_id)
                 self.no_handler(bot, update)
+                return
 
-            else:
-                out_id = txn_record.out_id
-                out_chat_id = txn_record.out_chat_id
-                msg = message_record.msg
+            # Update user state
+            self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                                   user_state_record.str())
 
-                # Update user state
-                self.database_client.insert_or_replace(self.database_client.user_states_table_name,
-                                                       user_state_record.str())
+            # Acknowledge the user
+            bot.sendMessage(local_chat_id,
+                            text="Target ID %d has sent." % channel_record.target_id)
 
-                # Acknowledge the user
-                bot.sendMessage(local_chat_id,
-                                text="Target %d has sent" % out_id )
+            # Change the state of the user first
+            self.start_handler(bot, update)
 
-                # Change the state of the user first
-                self.start_handler(bot, update)
-
-                # Send it back to the target id
-                bot.sendMessage(out_chat_id,
-                                text="Time: %s %s\nSource : %d\nResponse : %s"%
-                                (message_record.date, \
-                                 message_record.time, \
-                                 message_record.id, \
-                                 message_record.msg))
+            # Send it back to the target id
+            bot.sendMessage(channel_record.target_chat_id,
+                            text="Time: %s %s\nSource : %d\nResponse : %s"%
+                            (message_record.date, \
+                             message_record.time, \
+                             message_record.source_id,
+                             message_record.msg))
 
     def no_handler(self, bot, update):
         """
@@ -324,46 +342,47 @@ class handler:
         :param user_state_record: User state object
         """
         local_chat_id = update.message.chat_id
-        row = self.database_client.selectone(self.database_client.messages_table_name,
+        row = self.database_client.selectone(self.database_client.channels_table_name,
                                              "*",
-                                             "session=%d and chatid=%s and public=0" % (self.session, local_chat_id),
-                                             "date desc, time desc")
-        message_record = message.from_message_record(row)
+                                             "channelid=%d" % user_state_record.last_channel_id)
+        channel_record = channel.from_channel_record(row)
 
-        if message_record.id == 0:
-            self.logger.warn("Cannot find the chatid (%s) from message" % local_chat_id)
-            self.no_handler(bot, update)
-            return
-
-        row = self.database_client.selectone(self.database_client.txn_table_name,
-                                             "*",
-                                             "session = %d and inid = %d" % (self.session, message_record.id),
-                                             "date desc, time desc")
-        txn_record = txn.from_txn_record(row)
-
-        if txn_record.in_id == 0:
-            self.logger.warn("Cannot find the inchatid (%s) from txn" % local_chat_id)
-            self.no_handler(bot, update)
-            return
-        else:
-            # Store the message
-            message_record = message(session=self.session,
-                                     id=txn_record.in_id,
-                                     chat_id=str(local_chat_id),
-                                     msg=update.message.text,
-                                     public=0)
-
-            # Update message table
-            self.database_client.insert_or_replace(self.database_client.messages_table_name,
-                                                   message_record.str())
-
-            # Update user state
-            self.database_client.insert_or_replace(self.database_client.user_states_table_name,
-                                                   user_state_record.str())
-
+        if channel_record.source_chat_id != str(local_chat_id) or \
+           channel_record.live == 0:
+            # The channel is suddenly shutted down by the requester. Need to cancel the action
             bot.sendMessage(local_chat_id,
-                            text="Confirm your response:\n%s"%message_record.msg,
-                            reply_markup=self.yes_no_keyboard)
+                            text="Target ID %d is no longer valid." % channel_record.target_id,
+                            reply_markup=telegram.ReplyKeyboardHide())
+            self.no_handler(bot, update)
+            return
+
+        # Update message first
+        msg = update.message.text
+        message_id = self.get_next_message_id()
+        message_record = message(msg_id=message_id,
+                                 channel_id=channel_record.channel_id,
+                                 source_id=channel_record.source_id,
+                                 source_chat_id=channel_record.source_chat_id,
+                                 msg=msg)
+        self.database_client.insert_or_replace(self.database_client.messages_table_name,
+                                               message_record.str())
+
+        # Update channel
+        # WARNING: Beware of the race condition! The requester may have blocked the channel
+        #          when the message is still storing. Late update on channel!
+        channel_record.last_msg_id = message_id
+        self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                               channel_record.str())
+
+        # Update user state
+        self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                               user_state_record.str())
+
+        bot.sendMessage(local_chat_id,
+                        text=("Confirm your response:\n" + \
+                              ("Target ID: %d\n" % channel_record.target_id) + \
+                              ("Response: %s" % msg)),
+                        reply_markup=self.yes_no_keyboard)
 
     def response_msg_set_value_handler(self, bot, update, user_state_record):
         """
@@ -372,68 +391,81 @@ class handler:
         :param update: Callback update
         :param user_state_record: User state object
         """
-        query_id = update.message.text
         local_chat_id = update.message.chat_id
-        row = self.database_client.selectone(self.database_client.messages_table_name,
-                                             "*",
-                                             "session=%d and id=%s" % (self.session,query_id))
-        message_record = message.from_message_record(row)
+        target_id = int(update.message.text)
 
-        row = self.database_client.selectone(self.database_client.txn_table_name,
+        row = self.database_client.selectone(self.database_client.channels_table_name,
                                              "*",
-                                             "session=%d and outid=%s and inchatid='%d'"%
-                                             (self.session, query_id, local_chat_id))
-        txn_record = txn.from_txn_record(row)
+                                             "targetid=%d and sourcechatid='%d'" % (target_id, local_chat_id))
+        channel_row = channel.from_channel_record(row)
 
-        if message_record.public == 1:
-            # Indicate it is to reply a query
-            if txn_record.in_id == 0:
-                # Indicate the response has not been built before
-                self.id += 1
-                txn_record = txn(session=self.session,
-                                 out_id=message_record.id,
-                                 out_chat_id=message_record.chat_id,
-                                 in_id=self.id,
-                                 in_chat_id=local_chat_id)
-                self.database_client.insert_or_replace(self.database_client.txn_table_name,
-                                                       txn_record.str())
-            else:
-                # Indicate the response has been built before
-                self.database_client.insert_or_replace(self.database_client.txn_table_name,
-                                                       txn_record.str())
+        if channel_row.target_id == target_id and channel_row.source_chat_id == str(local_chat_id):
+            # Channel has been opened between the two users
+            if channel_row.live == 0:
+                # The communication is no longer live. Need to reject it
+                bot.sendMessage(local_chat_id,
+                                text="Target ID %d has been closed." % target_id,
+                                reply_markup=telegram.ReplyKeyboardHide())
+                self.no_handler(bot, update)
+                return
+
+            # The communication is still live. No new rows needed to be added in Channels.
+            # Update channels
+            channel_row.last_msg_id = 0
+            self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                                   channel_row.str())
+
+            # Update last channel id on user_state
+            user_state_record.last_channel_id = channel_row.channel_id
         else:
-            # Indicate it is to reply a response to its query
-            if txn_record.in_id == 0:
-                # Indicate the response has not been built before
-                row = self.database_client.selectone(self.database_client.txn_table_name,
-                                                     "*",
-                                                     "session=%d and inid=%s and outchatid='%d'"%
-                                                     (self.session, query_id, local_chat_id))
-                txn_record = txn.from_txn_record(row)
+            # Channel is not opened between the two users. Need to check whether the
+            # target_id points to a query
+            row = self.database_client.selectone(self.database_client.channels_table_name,
+                                                 "*",
+                                                 "targetid=%d and sourcechatid=''" % target_id)
+            channel_row = channel.from_channel_record(row)
 
-                if txn_record.in_id == 0:
-                    # query_id has not replied to the query before
-                    bot.sendMessage(local_chat_id,
-                                    text="Invalid target ID <%s>" % query_id,
-                                    reply_markup=telegram.ReplyKeyboardHide())
-                    return
-                else:
-                    txn_record = txn(session=self.session,
-                                     out_id=txn_record.in_id,
-                                     out_chat_id=txn_record.in_chat_id,
-                                     in_id=txn_record.out_id,
-                                     in_chat_id=txn_record.out_chat_id)
-                    self.database_client.insert_or_replace(self.database_client.txn_table_name,
-                                                           txn_record.str())
+            if channel_row.target_id == target_id and \
+               channel_row.public == 1 and \
+               channel_row.live == 1:
+                # Target id point to a valid query
+                source_id = self.get_next_source_id()
 
-        # Update message
-        message_record = message(session=self.session,
-                                 id=txn_record.in_id,
-                                 chat_id=local_chat_id,
-                                 msg='',
-                                 public=0)
-        self.database_client.insert_or_replace(self.database_client.messages_table_name,
-                                               message_record.str())
+                # Update channels
+                channel_id = self.get_next_channel_id()
+                channel_src2tar = channel(channel_id=channel_id,
+                                          source_id=source_id,
+                                          source_chat_id=str(local_chat_id),
+                                          target_id=channel_row.target_id,
+                                          target_chat_id=channel_row.target_chat_id,
+                                          last_msg_id=0,
+                                          public=0,
+                                          live=1)
+                self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                                       channel_src2tar.str())
+
+                channel_id = self.get_next_channel_id()
+                channel_tar2src = channel(channel_id=channel_id,
+                                          target_id=source_id,
+                                          target_chat_id=str(local_chat_id),
+                                          source_id=channel_row.target_id,
+                                          source_chat_id=channel_row.target_chat_id,
+                                          last_msg_id=0,
+                                          public=0,
+                                          live=1)
+                self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                                       channel_tar2src.str())
+
+                # Update last channel id on user_state
+                user_state_record.last_channel_id = channel_src2tar.channel_id
+            else:
+                # The communication is no longer live. Need to reject it
+                bot.sendMessage(local_chat_id,
+                                text="Target ID %d is invalid or no longer live" % target_id,
+                                reply_markup=telegram.ReplyKeyboardHide())
+                self.no_handler(bot, update)
+                pass
+
 
         # Update user state
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,
@@ -482,17 +514,9 @@ class handler:
                          ("Message=%s\n"%question))
 
         # Update user state
+        user_state_record.last_channel_id = channel_id
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,
                                                user_state_record.str())
-
-        # Insert question into messages
-        message_record = message(session=self.session,
-                                 id=self.id,
-                                 chat_id=local_chat_id,
-                                 public=1,
-                                 msg=question)
-        self.database_client.insert_or_replace(self.database_client.messages_table_name,
-                                               message_record.str())
 
         # Acknowledge the demand
         bot.sendMessage(update.message.chat_id,

@@ -44,7 +44,7 @@ class channel:
         :param record: Database record
         :param set_curr_time: Indicate if current date and time is set
         """                
-        if not row:
+        if not row or len(row) <= 1:
             return channel()
         else:
             ret = channel(channel_id=row[channel.channel_id_index()],
