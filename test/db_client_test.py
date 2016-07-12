@@ -5,7 +5,6 @@ import logging
 import os
 from src.db_client import db_client
 from src.channel import channel
-from src.txn import txn
 from src.user_state import user_state
 from src.message import message
 from src.config import config
@@ -83,52 +82,6 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(channel_record_from_row.last_msg_id, channel_record.last_msg_id)
         self.assertEqual(channel_record_from_row.public, channel_record.public)
         self.assertEqual(channel_record_from_row.live, channel_record.live)
-
-        ########################################################################
-        # Txn
-        # Check if table is created
-        obj.cursor.execute('''delete from %s where 1 = 1''' % obj.txn_table_name)
-        txn_record = txn(0, 3, "2345678")
-        txn_record.out_id = 2
-        txn_record.out_chat_id = "1234567"
-        obj.insert(obj.txn_table_name, txn_record.str())
-
-        # Check if the row is inserted
-        row = obj.selectone(obj.txn_table_name, "*")
-        txn_record_from_row = txn.from_txn_record(row, False)
-        
-        self.assertEqual(txn_record_from_row.date, txn_record.date)
-        self.assertEqual(txn_record_from_row.time, txn_record.time)
-        self.assertEqual(txn_record_from_row.session, txn_record.session)
-        self.assertEqual(txn_record_from_row.out_id, txn_record.out_id)
-        self.assertEqual(txn_record_from_row.out_chat_id, txn_record.out_chat_id)
-        self.assertEqual(txn_record_from_row.in_id, txn_record.in_id)
-        self.assertEqual(txn_record_from_row.in_chat_id, txn_record.in_chat_id)
-
-        # Update the row
-        txn_record.out_id = 5
-        txn_record.out_chat_id = "0000001"
-        obj.insert_or_replace(obj.txn_table_name, txn_record.str())
-
-        # Check if the row is updated
-        row = obj.selectone(obj.txn_table_name, "*")
-        txn_record_from_row = txn.from_txn_record(row, False)
-        
-        self.assertEqual(txn_record_from_row.date, txn_record.date)
-        self.assertEqual(txn_record_from_row.time, txn_record.time)
-        self.assertEqual(txn_record_from_row.session, txn_record.session)
-        self.assertEqual(txn_record_from_row.out_id, txn_record.out_id)
-        self.assertEqual(txn_record_from_row.out_chat_id, txn_record.out_chat_id)
-        self.assertEqual(txn_record_from_row.in_id, txn_record.in_id)
-        self.assertEqual(txn_record_from_row.in_chat_id, txn_record.in_chat_id)
-        
-        row = obj.selectone(obj.txn_table_name, "*", "inid = 10000")
-        txn_record_from_row = txn.from_txn_record(row, False)
-        self.assertEqual(txn_record_from_row.session, 0)
-        self.assertEqual(txn_record_from_row.out_id, 0)
-        self.assertEqual(txn_record_from_row.out_chat_id, '')
-        self.assertEqual(txn_record_from_row.in_id, 0)
-        self.assertEqual(txn_record_from_row.in_chat_id, '')        
 
         ########################################################################
         # User_states

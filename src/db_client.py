@@ -28,14 +28,6 @@ class db_client():
             % (self.channels_table_name, self.channels_table_name, \
                channel.key2_str())        
 
-        # txn
-        self.txn_table_name = 'txn'
-        self.create_txn_table_sql = \
-             '''create table if not exists %s (date text, time text, session int, outid int, outchatid text, inid int, inchatid text)'''\
-             % self.txn_table_name
-        self.create_txn_index_sql = \
-             '''create unique index %s_idx on %s(session, inid)''' % (self.txn_table_name, self.txn_table_name)
-
         # user_states
         self.user_states_table_name = 'User_States'
         self.create_user_states_table_sql = \
@@ -63,9 +55,6 @@ class db_client():
         # Create tables`
         self.cursor.execute(self.create_channels_table_sql)
         self.logger.info('Table %s is created' % self.channels_table_name)        
-        
-        self.cursor.execute(self.create_txn_table_sql)
-        self.logger.info('Table %s is created' % self.txn_table_name)
 
         self.cursor.execute(self.create_user_states_table_sql)
         self.logger.info('Table %s is created' % self.user_states_table_name)
@@ -80,9 +69,6 @@ class db_client():
             self.cursor.execute(self.create_channels_index_sql)
             self.cursor.execute(self.create_channels_index2_sql)
             self.logger.info('Table %s index is created' % self.channels_table_name)            
-
-            self.cursor.execute(self.create_txn_index_sql)
-            self.logger.info('Table %s index is created' % self.txn_table_name)
 
             self.cursor.execute(self.create_user_states_index_sql)
             self.logger.info('Table %s index is created' % self.user_states_table_name)
