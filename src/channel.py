@@ -5,7 +5,7 @@ import datetime
 class channel:
     def __init__(self, channel_id=0, source_id=0, source_chat_id='',\
                  target_id=0, target_chat_id='', last_msg_id=0,
-                 public=0, live=1):
+                 public=0, live=1, match=0):
         """
         Constructor
         """
@@ -20,12 +20,13 @@ class channel:
         self.last_msg_id = last_msg_id
         self.public = public
         self.live = live
+        self.match = match
 
     def str(self):
         """
         Output the object into a comma separated string
         """        
-        return "'%s','%s',%d,%d,'%s',%d,'%s',%d,%d,%d" % \
+        return "'%s','%s',%d,%d,'%s',%d,'%s',%d,%d,%d,%d" % \
                (self.date, \
                 self.time, \
                 self.channel_id, \
@@ -35,7 +36,8 @@ class channel:
                 self.target_chat_id, \
                 self.last_msg_id, \
                 self.public, \
-                self.live)
+                self.live, \
+                self.match)
 
     @staticmethod
     def from_channel_record(row, set_curr_time=True):
@@ -54,7 +56,8 @@ class channel:
                           target_chat_id=row[channel.target_chat_id_index()],
                           last_msg_id=row[channel.last_msg_id_index()],
                           public=row[channel.public_index()],
-                          live=row[channel.live_index()])
+                          live=row[channel.live_index()],
+                          match=row[channel.match_index()])
             if not set_curr_time:
                 ret.date = row[channel.date_index()]
                 ret.time = row[channel.time_index()]
@@ -65,7 +68,7 @@ class channel:
     def field_str():
         return "date text, time text, channelid int, sourceid int, " + \
                "sourcechatid text, targetid int, targetchatid text, " + \
-               "lastmsgid int, public int, live int"
+               "lastmsgid int, public int, live int, match int"
         
     @staticmethod
     def key_str():
@@ -113,4 +116,8 @@ class channel:
         
     @staticmethod
     def live_index():
+        return 9
+
+    @staticmethod
+    def match_index():
         return 9

@@ -55,3 +55,11 @@ class screen_messages():
     def ask_confirming_response(target_id, msg):
         return ("Please confirm to send out the following response:\n" + \
                 ("Target ID: %d\nResponse: %s" % (target_id, msg)))
+
+    @staticmethod
+    def ask_confirming_match(target_id):
+        return "Do you confirm to match target ID %d?" % target_id
+
+    @staticmethod
+    def ask_confirming_unmatch(target_id):
+        return "Do you confirm to unmatch target ID %d?" % target_id
