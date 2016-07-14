@@ -230,6 +230,12 @@ class handler:
             self.query_confirmed_yes_handler(bot, update, local_chat_id, user_state_record)
         elif user_state_record.prev_state == user_state.states.RESPONSE_PENDING_CONFIRM:
             self.response_confirmed_yes_handler(bot, update, local_chat_id, user_state_record)
+        elif user_state_record.prev_state == user_state.states.MATCH_PENDING_CONFIRM:
+            self.match_confirmed_yes_handler(bot, update, local_chat_id, user_state_record)
+        elif user_state_record.prev_state == user_state.states.UNMATCH_PENDING_CONFIRM:
+            self.unmatch_confirmed_yes_handler(bot, update, local_chat_id, user_state_record)
+        else:
+            self.no_handler(bot, update)
 
     def query_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
         row = self.database_client.selectone(self.database_client.channels_table_name,
@@ -277,7 +283,6 @@ class handler:
         bot.sendMessage(self.channel_name,
                         text=screen_messages.broadcast_query(message_record))
 
-
     def response_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
         row = self.database_client.selectone(self.database_client.channels_table_name,
                                              "*",
@@ -295,7 +300,7 @@ class handler:
         if channel_record.live == 0:
             # The counterparty has closed the channel
             bot.sendMessage(local_chat_id,
-                            text=screen_messages.invalid_target_id(channel_record.target_id),
+                            text=screen_messages.inactivated_target_id(channel_record.target_id),
                             reply_markup=telegram.ReplyKeyboardHide())
             self.no_handler(bot, update)
             return
@@ -326,6 +331,52 @@ class handler:
         # Send it back to the target id
         bot.sendMessage(channel_record.target_chat_id,
                         text=screen_messages.broadcast_response(message_record))
+
+    def match_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
+        pass
+
+    def unmatch_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
+        row = self.database_client.selectone(self.database_client.channels_table_name,
+                                             "*",
+                                             "channelid=%d" % user_state_record.last_channel_id)
+        channel_record = channel.from_channel_record(row)
+
+        if channel_record.target_chat_id == str(local_chat_id) and channel_record.live == 1:
+            # Close a query
+            channel_record.live = 0
+            self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                                   channel_record.str())
+        elif channel_record.source_chat_id == str(local_chat_id) and channel_record.live == 1:
+            # Close a conversation
+            channel_record.live = 0
+            self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                                   channel_record.str())
+
+            # Close the counterparty
+            row = self.database_client.selectone(self.database_client.channels_table_name,
+                                                 "*",
+                                                 "targetid=%d and sourcechatid='%s'" \
+                                                 % (channel_record.source_id, channel_record.target_chat_id))
+            channel_record = channel.from_channel_record(row)
+            channel_record.live = 0
+            self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                                   channel_record.str())
+        else:
+            bot.sendMessage(local_chat_id,
+                            text=screen_messages.inactivated_target_id(channel_record.target_id),
+                            reply_markup=telegram.ReplyKeyboardHide())
+            self.no_handler(bot, update)
+            return
+
+        # Update the user state
+        self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                               user_state_record.str())
+
+        # Restarted
+        bot.sendMessage(local_chat_id,
+                        text=screen_messages.confirm_unmatch(channel_record.target_id),
+                        reply_markup=telegram.ReplyKeyboardHide())
+        self.start_handler(bot, update)
 
     def no_handler(self, bot, update):
         """
@@ -390,7 +441,7 @@ class handler:
            channel_record.live == 0:
             # The channel is suddenly shutted down by the requester. Need to cancel the action
             bot.sendMessage(local_chat_id,
-                            text=screen_messages.invalid_target_id(channel_record.target_id),
+                            text=screen_messages.inactivated_target_id(channel_record.target_id),
                             reply_markup=telegram.ReplyKeyboardHide())
             self.no_handler(bot, update)
             return
@@ -429,7 +480,17 @@ class handler:
         :param user_state_record: User state object
         """
         local_chat_id = update.message.chat_id
-        target_id = int(update.message.text)
+        target_id = update.message.text
+
+        if target_id.isdigit():
+            target_id = int(target_id)
+        else:
+            # Target id is not integer
+            bot.sendMessage(local_chat_id,
+                            text=screen_messages.inactivated_target_id(target_id),
+                            reply_markup=telegram.ReplyKeyboardHide())
+            self.no_handler(bot, update)
+            return
 
         row = self.database_client.selectone(self.database_client.channels_table_name,
                                              "*",
@@ -441,7 +502,7 @@ class handler:
             if channel_row.live == 0:
                 # The communication is no longer live. Need to reject it
                 bot.sendMessage(local_chat_id,
-                                text=screen_messages.invalid_target_id(target_id),
+                                text=screen_messages.inactivated_target_id(target_id),
                                 reply_markup=telegram.ReplyKeyboardHide())
                 self.no_handler(bot, update)
                 return
@@ -498,11 +559,10 @@ class handler:
             else:
                 # The communication is no longer live. Need to reject it
                 bot.sendMessage(local_chat_id,
-                                text=screen_messages.invalid_target_id(target_id),
+                                text=screen_messages.inactivated_target_id(target_id),
                                 reply_markup=telegram.ReplyKeyboardHide())
                 self.no_handler(bot, update)
-                pass
-
+                return
 
         # Update user state
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,
@@ -554,43 +614,74 @@ class handler:
                         text=screen_messages.ask_confirming_query(question),
                         reply_markup=self.yes_no_keyboard)
 
-    def match_set_value_handler(self, bot, update, user_state_record):
+    def match_confirm_set_value_handler(self, bot, update, user_state_record):
         target_id = int(update.message.text)
         row = self.database_client.selectone(self.database_client.channels_table_name,
                                              "*",
-                                             "targetid=%d and sourcechatid" \
+                                             "targetid=%d and sourcechatid='%s'" \
                                              % (target_id, user_state_record.chat_id))
         channel_record = channel.from_channel_record(row)
 
         if channel_record.target_id == target_id and \
            channel_record.source_chat_id == user_state_record.chat_id and \
            channel_record.live == 1:
+            # Update the state
             user_state_record.last_channel_id = channel_record.channel_id
+            self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                                   user_state_record.str())
+
+            # Ask to confirm
             bot.sendMessage(update.message.chat_id,
                             text=screen_messages.ask_confirming_match(target_id),
                             reply_markup=self.yes_no_keyboard)
         else:
             bot.sendMessage(update.message.chat_id,
-                            text=screen_messages.invalid_target_id(target_id),
+                            text=screen_messages.inactivated_target_id(target_id),
                             reply_markup=telegram.ReplyKeyboardHide())
 
-    def unmatch_set_value_handler(self, bot, update, user_state_record):
+    def unmatch_confirm_set_value_handler(self, bot, update, user_state_record):
         target_id = int(update.message.text)
         row = self.database_client.selectone(self.database_client.channels_table_name,
                                              "*",
-                                             "targetid=%d and sourcechatid" \
+                                             "targetid=%d and sourcechatid='%s'" \
                                              % (target_id, user_state_record.chat_id))
         channel_record = channel.from_channel_record(row)
 
         if channel_record.target_id == target_id and \
                         channel_record.source_chat_id == user_state_record.chat_id and \
                         channel_record.live == 1:
+            # Going to close the one-to-one communication
+            # Update the state
             user_state_record.last_channel_id = channel_record.channel_id
+            self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                                   user_state_record.str())
+
+            # Ask to confirm
             bot.sendMessage(update.message.chat_id,
-                            text=screen_messages.ask_confirming_match(target_id),
+                            text=screen_messages.ask_confirming_unmatch(target_id),
                             reply_markup=self.yes_no_keyboard)
         else:
-            bot.sendMessage(update.message.chat_id,
-                            text=screen_messages.invalid_target_id(target_id),
-                            reply_markup=telegram.ReplyKeyboardHide())
+            # Check if it is a query
+            row = self.database_client.selectone(self.database_client.channels_table_name,
+                                                 "*",
+                                                 "targetid=%d and targetchatid='%s' and public=1 and live=1" \
+                                                 % (target_id, user_state_record.chat_id))
+            channel_record = channel.from_channel_record(row)
+
+            if channel_record.target_id == target_id and channel_record.target_chat_id == user_state_record.chat_id:
+                # Going to close the query
+                # Update the state
+                user_state_record.last_channel_id = channel_record.channel_id
+                self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                                       user_state_record.str())
+
+                # Ask to confirm
+                bot.sendMessage(update.message.chat_id,
+                                text=screen_messages.ask_confirming_unmatch(target_id),
+                                reply_markup=self.yes_no_keyboard)
+            else:
+                bot.sendMessage(update.message.chat_id,
+                                text=screen_messages.inactivated_target_id(target_id),
+                                reply_markup=telegram.ReplyKeyboardHide())
+                self.no_handler(bot, update)
 

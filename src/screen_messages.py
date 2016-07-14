@@ -30,6 +30,17 @@ class screen_messages():
         return "Response has been sent to target %d" % target_id
 
     @staticmethod
+    def confirm_match(target_id):
+        return ("Matching target ID %d has been sent.\n" % target_id) + \
+                "When the other side also sends out matching, the contact will be exchanged"
+
+    @staticmethod
+    def confirm_unmatch(target_id):
+        return ("Unmatching target ID %d has been sent.\n" % target_id) + \
+                "If it is a query, its responses will no longer be received.\n" + \
+                "If it is a private communication, the counterparty will not send message to you."
+
+    @staticmethod
     def broadcast_query(message_record):
         return "Time: %s %s\nSource ID: %d\nQuery: %s" \
                % (message_record.date, message_record.time[0:8], message_record.source_id, message_record.msg)
@@ -40,8 +51,8 @@ class screen_messages():
                % (message_record.date, message_record.time[0:8], message_record.source_id, message_record.msg)
 
     @staticmethod
-    def invalid_target_id(target_id):
-        return "Target ID (%d) is no longer valid or closed." % target_id
+    def inactivated_target_id(target_id):
+        return "Target ID (%s) is closed or no longer valid." % str(target_id)
 
     @staticmethod
     def cancel_action():

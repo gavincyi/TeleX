@@ -65,7 +65,7 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler(handler.no_handler_name(), msg_handler.no_handler))
     updater.dispatcher.add_handler(CommandHandler(handler.back_handler_name(), msg_handler.no_handler))
     updater.dispatcher.add_handler(CommandHandler(handler.match_handler_name(), msg_handler.match_handler))
-    updater.dispatcher.add_handler(CommandHandler(handler.unmatch_handler_name(), msg_handler.no_match_handler))
+    updater.dispatcher.add_handler(CommandHandler(handler.unmatch_handler_name(), msg_handler.unmatch_handler))
     updater.dispatcher.add_handler(MessageHandler([Filters.text], msg_handler.set_value_handler))
 
     logger.info("Polling is started")

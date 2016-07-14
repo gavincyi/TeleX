@@ -16,7 +16,8 @@ class channel_test(unittest.TestCase):
                          target_chat_id='654321',
                          last_msg_id=399,
                          public=1,
-                         live=1)
+                         live=1,
+                         match=1)
         row = channel_record.str().split(',')
         row = [e.replace("'", "") if e.find("'") > -1 else int(e) for e in row]
         channel_record_from_row = channel.from_channel_record(row, False)
@@ -32,7 +33,8 @@ class channel_test(unittest.TestCase):
         self.assertEqual(channel_record.last_msg_id, channel_record_from_row.last_msg_id)
         self.assertEqual(channel_record.public, channel_record_from_row.public)
         self.assertEqual(channel_record.live, channel_record_from_row.live)
-        
+        self.assertEqual(channel_record.match, channel_record_from_row.match)
+
         ## Negative test
         channel_record_from_row = channel.from_channel_record(None)
         self.assertEqual(0, channel_record_from_row.channel_id)
@@ -43,6 +45,7 @@ class channel_test(unittest.TestCase):
         self.assertEqual(0, channel_record_from_row.last_msg_id)
         self.assertEqual(0, channel_record_from_row.public)
         self.assertEqual(1, channel_record_from_row.live)
+        self.assertEqual(0, channel_record_from_row.match)
 
 if __name__ == '__main__':
     unittest.main()        
