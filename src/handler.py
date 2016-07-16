@@ -3,6 +3,7 @@ from src.channel import channel
 from src.user_state import user_state
 from src.message import message
 from src.screen_messages import screen_messages
+from src.contact import contact
 import telegram
 
 
@@ -22,6 +23,8 @@ class handler:
                              [['/' + handler.back_handler_name()]])
         self.yes_no_keyboard = telegram.ReplyKeyboardMarkup(
                              [['/' + handler.yes_handler_name(), '/' + handler.no_handler_name()]])
+        self.yes_contact_no_keyboard = telegram.ReplyKeyboardMarkup(
+            [[telegram.KeyboardButton(text='/' + handler.yes_handler_name(),request_contact=True), '/' + handler.no_handler_name()]])
 
     @staticmethod
     def query_handler_name():
@@ -333,7 +336,83 @@ class handler:
                         text=screen_messages.broadcast_response(message_record))
 
     def match_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
-        pass
+        row = self.database_client.selectone(self.database_client.channels_table_name,
+                                             "*",
+                                             "channelid=%d" % user_state_record.last_channel_id)
+        channel_record = channel.from_channel_record(row)
+
+        if channel_record.channel_id != user_state_record.last_channel_id or \
+           channel_record.source_chat_id != str(local_chat_id):
+            # Error case for not finding channel id
+            self.logger.warn("Channel id %d / Src id %d is not found." \
+                             % (user_state_record.last_channel_id, channel_record.source_chat_id))
+            self.no_handler(bot, update)
+            return
+
+        row = self.database_client.selectone(self.database_client.channels_table_name,
+                                             "*",
+                                             "targetid=%d and sourcechatid='%s'" \
+                                             % (channel_record.source_id, channel_record.target_chat_id))
+        channel_record_counterparty = channel.from_channel_record(row)
+
+        if channel_record_counterparty.target_id != channel_record.source_id and \
+           channel_record_counterparty.source_chat_id != channel_record.target_chat_id:
+            # Error case for not finding channel id
+            self.logger.warn("Channel id %d / Src id %d is not found." \
+                             % (user_state_record.last_channel_id, channel_record_counterparty.source_chat_id))
+            self.no_handler(bot, update)
+            return
+
+        # Update the contact
+        contact_record = contact(chat_id=local_chat_id,
+                                 phone_number=update.message.contact.phone_number,
+                                 first_name=update.message.contact.first_name,
+                                 last_name=update.message.contact.last_name)
+        self.database_client.insert_or_replace(self.database_client.contacts_table_name,
+                                               contact_record.str())
+
+        if channel_record_counterparty.match == 1:
+            row = self.database_client.selectone(self.database_client.contacts_table_name,
+                                                 "*",
+                                                 "chatid='%s'" % channel_record_counterparty.source_chat_id)
+            contact_record_counterparty = contact.from_contact_record(row)
+
+            if contact_record_counterparty.chat_id != channel_record_counterparty.source_chat_id:
+                self.logger.warn("Cannot find contact by chatid = %s" % channel_record_counterparty.source_chat_id)
+                self.no_handler(bot, update)
+                return
+
+            bot.sendMessage(local_chat_id,
+                            text="Contact of target id %d" % channel_record.target_id,
+                            reply_markup=telegram.ReplyKeyboardHide())
+            bot.sendContact(local_chat_id,
+                            phone_number=contact_record_counterparty.phone_number,
+                            first_name=contact_record_counterparty.first_name,
+                            last_name=contact_record_counterparty.last_name)
+
+            bot.sendMessage(int(contact_record_counterparty.chat_id),
+                            text="Contact of target id %d" % channel_record.source_id,
+                            reply_markup=telegram.ReplyKeyboardHide())
+            bot.sendContact(int(contact_record_counterparty.chat_id),
+                            phone_number=contact_record.phone_number,
+                            first_name=contact_record.first_name,
+                            last_name=contact_record.last_name)
+
+        else:
+            bot.sendMessage(local_chat_id,
+                            text=screen_messages.match_and_wait_counterparty(channel_record.target_id),
+                            reply_markup=telegram.ReplyKeyboardHide())
+
+        # Update the status of field match
+        channel_record.match = 1
+        self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                               channel_record.str())
+
+        # Update user state
+        self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                               user_state_record.str())
+        self.start_handler(bot, update)
+
 
     def unmatch_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
         row = self.database_client.selectone(self.database_client.channels_table_name,
@@ -633,7 +712,7 @@ class handler:
             # Ask to confirm
             bot.sendMessage(update.message.chat_id,
                             text=screen_messages.ask_confirming_match(target_id),
-                            reply_markup=self.yes_no_keyboard)
+                            reply_markup=self.yes_contact_no_keyboard)
         else:
             bot.sendMessage(update.message.chat_id,
                             text=screen_messages.inactivated_target_id(target_id),
