@@ -80,3 +80,7 @@ class screen_messages():
         return ("The counterparty %d has not yet agreed to match.\n" % target_id) + \
                "Your contact has not yet been forwarded.\n" + \
                "Once the counterparty agrees as well we will exchange the two contacts."
+               
+    @staticmethod
+    def match_send_contact(target_id):
+        return ("The following is the contact of target id %d" % target_id)

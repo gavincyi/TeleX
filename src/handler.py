@@ -386,7 +386,7 @@ class handler:
                 return
 
             bot.sendMessage(local_chat_id,
-                            text="Contact of target id %d" % channel_record.target_id,
+                            text=screen_messages.match_send_contact(channel_record.target_id),
                             reply_markup=telegram.ReplyKeyboardHide())
             bot.sendContact(local_chat_id,
                             phone_number=contact_record_counterparty.phone_number,
@@ -394,7 +394,7 @@ class handler:
                             last_name=contact_record_counterparty.last_name)
 
             bot.sendMessage(int(contact_record_counterparty.chat_id),
-                            text="Contact of target id %d" % channel_record.source_id,
+                            text=screen_messages.match_send_contact(channel_record.source_id),
                             reply_markup=telegram.ReplyKeyboardHide())
             bot.sendContact(int(contact_record_counterparty.chat_id),
                             phone_number=contact_record.phone_number,

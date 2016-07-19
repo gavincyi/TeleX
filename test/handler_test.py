@@ -54,6 +54,11 @@ class bot_test():
     """
     Bot class for unit test
     """
+    @staticmethod
+    def contact_str(phone_number='', first_name='', last_name=''):
+        return "Contact received. PhoneNum=%s, Firstname=%s, Lastname=%s" \
+               % (phone_number, first_name, last_name)
+    
     def __init__(self):
         self.msg_map = {}
     def sendMessage(self, chat_id, text, parse_mode=None, disable_web_page_preview=None, **kwargs):
@@ -61,6 +66,13 @@ class bot_test():
             self.msg_map[chat_id].append(text)
         else:
             self.msg_map[chat_id] = [text]
+            
+    def sendContact(self, chat_id=0, phone_number='', first_name='', last_name=''):
+        text = bot_test.contact_str(phone_number, first_name, last_name)
+        if chat_id in self.msg_map.keys():
+            self.msg_map[chat_id].append(text)
+        else:
+            self.msg_map[chat_id] = [text]        
 
     def clear_msg_map(self):
         self.msg_map.clear()
@@ -104,53 +116,112 @@ class handler_test(unittest.TestCase):
                          screen_messages.welcome(update.message.from_user.first_name))
         bot.clear_msg_map()
 
-    def check_query(self, bot, update, query):
-        update.message.text = "/" + self.hd.query_handler_name()
+    def check_query_action(self, bot, update):
         self.hd.query_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_query())
-        bot.clear_msg_map()
+        bot.clear_msg_map()        
 
-        # Send query question
-        update.message.text = query
+    def check_query_question(self, bot, update, query):
         self.hd.set_value_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_confirming_query(query))
-        bot.clear_msg_map()
-
-        # Send yes to confirm the query
-        update.message.text = "/" + handler.yes_handler_name()
+        bot.clear_msg_map()    
+        
+    def check_query_confirm(self, bot, update, query):
         self.hd.yes_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.confirm_send_query(self.hd.source_id, query))
         self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.welcome(update.message.from_user.first_name))
         self.assertEqual(bot.msg_map[handler_test.conf.channel_name][0].split('\n')[1], "Source ID: %d" % self.hd.source_id)
         self.assertEqual(bot.msg_map[handler_test.conf.channel_name][0].split('\n')[2], "Query: " + query)
+        bot.clear_msg_map()        
+        
+    def check_response_action(self, bot, update):      
+        self.hd.response_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_target_id())
+        bot.clear_msg_map()        
+        
+    def check_response_target_id(self, bot, update):
+        self.hd.set_value_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_response())
+        bot.clear_msg_map()    
+        
+    def check_response_message(self, bot, update, target_id):
+        self.hd.set_value_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], \
+                         screen_messages.ask_confirming_response(target_id, update.message.text))
+        bot.clear_msg_map()    
+        
+    def check_response_confirm(self, bot, update, opp_update, target_id, response):
+        self.hd.yes_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.confirm_send_response_to_target(target_id))
+        self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.welcome(update.message.from_user.first_name))
+        self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split("\n")[1], "Source ID: %d" % self.hd.source_id)
+        self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split("\n")[2], "Response: %s" % response)
+        bot.clear_msg_map()        
+        
+    def check_match_action(self, bot, update):
+        self.hd.match_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_target_id())
+        bot.clear_msg_map()        
+        
+    def check_match_target_id(self, bot, update):
+        self.hd.set_value_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_confirming_match(update.message.text))
         bot.clear_msg_map()
+        
+    def check_match_one_side(self, bot, update, target_id):
+        self.hd.yes_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.confirm_match(target_id))
+        self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.match_and_wait_counterparty(target_id))
+        self.assertEqual(bot.msg_map[update.message.chat_id][2], screen_messages.welcome(update.message.from_user.first_name))
+        bot.clear_msg_map()       
+    
+    def check_match_two_side(self, bot, update, opp_update, source_id, target_id):
+        self.hd.yes_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.match_send_contact(target_id))
+        self.assertEqual(bot.msg_map[update.message.chat_id][1], \
+                         bot_test.contact_str(phone_number=opp_update.message.contact.phone_number,
+                                              first_name=opp_update.message.contact.first_name,
+                                              last_name=opp_update.message.contact.last_name))
+        self.assertEqual(bot.msg_map[update.message.chat_id][2], screen_messages.welcome(update.message.from_user.first_name))
+        self.assertEqual(bot.msg_map[opp_update.message.chat_id][0], screen_messages.match_send_contact(source_id))
+        self.assertEqual(bot.msg_map[opp_update.message.chat_id][1], \
+                         bot_test.contact_str(phone_number=update.message.contact.phone_number,
+                                              first_name=update.message.contact.first_name,
+                                              last_name=update.message.contact.last_name))                                              
+        
+    def check_query(self, bot, update, query):
+        update.message.text = "/" + self.hd.query_handler_name()
+        self.check_query_action(bot, update)
+
+        # Send query question
+        update.message.text = query
+        self.check_query_question(bot, update, query)
+
+        # Send yes to confirm the query
+        update.message.text = "/" + handler.yes_handler_name()
+        self.check_query_confirm(bot, update, query)
 
     def check_response(self, bot, update, opp_update, target_id, response):
         update.message.text = "/" + self.hd.response_handler_name()
-        self.hd.response_handler(bot, update)
-        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_target_id())
-        bot.clear_msg_map()
+        self.check_response_action(bot, update)
 
         # Response target id
         update.message.text = "%s" % target_id
-        self.hd.set_value_handler(bot, update)
-        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_response())
-        bot.clear_msg_map()
+        self.check_response_target_id(bot, update)
 
         # Response message
         update.message.text = response
-        self.hd.set_value_handler(bot, update)
-        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_confirming_response(target_id, response))
-        bot.clear_msg_map()
+        self.check_response_message(bot, update, target_id)
 
         # Confirm response message
         update.message_test = "/" + self.hd.yes_handler_name()
-        self.hd.yes_handler(bot, update)
-        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.confirm_send_response_to_target(target_id))
-        self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.welcome(self.his_first_name))
-        self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split("\n")[1], "Source ID: %d" % self.hd.source_id)
-        self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split("\n")[2], "Response: %s" % response)
-        bot.clear_msg_map()
+        self.check_response_confirm(bot, update, opp_update, target_id, response)
+
+    def check_no(self, bot, update):
+        self.hd.no_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.cancel_action())
+        self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.welcome(update.message.from_user.first_name))
+        bot.clear_msg_map()        
 
     def test_start(self):
         # Initialize db and hd
@@ -169,35 +240,23 @@ class handler_test(unittest.TestCase):
 
         # Send /Query
         update.message.text = "/" + self.hd.query_handler_name()
-        self.hd.query_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.my_chat_id][0], screen_messages.ask_query())
-        bot.clear_msg_map()
+        self.check_query_action(bot, update)
 
         # Send /No
         update.message.text = "/" + self.hd.no_handler_name()
-        self.hd.no_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.my_chat_id][0], screen_messages.cancel_action())
-        self.assertEqual(bot.msg_map[self.my_chat_id][1], screen_messages.welcome(self.my_first_name))
-        bot.clear_msg_map()
+        self.check_no(bot, update)
 
         # Send /Query again
         update.message.text = "/" + self.hd.query_handler_name()
-        self.hd.query_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.my_chat_id][0], screen_messages.ask_query())
-        bot.clear_msg_map()
+        self.check_query_action(bot, update)
 
         # Send query question
         update.message.text = query
-        self.hd.set_value_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.my_chat_id][0], screen_messages.ask_confirming_query(query))
-        bot.clear_msg_map()
-
+        self.check_query_question(bot, update, query)
+        
         # Send /No
         update.message.text = "/" + self.hd.no_handler_name()
-        self.hd.no_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.my_chat_id][0], screen_messages.cancel_action())
-        self.assertEqual(bot.msg_map[self.my_chat_id][1], screen_messages.welcome(self.my_first_name))
-        bot.clear_msg_map()
+        self.check_no(bot, update)
 
     def test_query(self):
         # Initialize db and hd
@@ -228,65 +287,44 @@ class handler_test(unittest.TestCase):
         target_id = self.hd.source_id
 
         # Start another user
-        update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name)
-        self.check_start(bot, update)
+        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name)
+        self.check_start(bot, his_update)
 
         # Response
-        update.message.text = "/" + self.hd.response_handler_name()
-        self.hd.response_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.his_chat_id][0], screen_messages.ask_target_id())
-        bot.clear_msg_map()
+        his_update.message.text = "/" + self.hd.response_handler_name()
+        self.check_response_action(bot, his_update)
 
         # Cancel response
-        update.message.text = "/" + self.hd.no_handler_name()
-        self.hd.no_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.his_chat_id][0], screen_messages.cancel_action())
-        self.assertEqual(bot.msg_map[self.his_chat_id][1], screen_messages.welcome(self.his_first_name))
-        bot.clear_msg_map()
+        his_update.message.text = "/" + self.hd.no_handler_name()
+        self.check_no(bot, his_update)
 
         # Response again
-        update.message.text = "/" + self.hd.response_handler_name()
-        self.hd.response_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.his_chat_id][0], screen_messages.ask_target_id())
-        bot.clear_msg_map()
+        his_update.message.text = "/" + self.hd.response_handler_name()
+        self.check_response_action(bot, his_update)
 
         # Response target id
-        update.message.text = "%s" % target_id
-        self.hd.set_value_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.his_chat_id][0], screen_messages.ask_response())
-        bot.clear_msg_map()
-
+        his_update.message.text = "%s" % target_id
+        self.check_response_target_id(bot, his_update)
+        
         # No again
-        update.message.text = "/" + self.hd.no_handler_name()
-        self.hd.no_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.his_chat_id][0], screen_messages.cancel_action())
-        self.assertEqual(bot.msg_map[self.his_chat_id][1], screen_messages.welcome(self.his_first_name))
-        bot.clear_msg_map()
+        his_update.message.text = "/" + self.hd.no_handler_name()
+        self.check_no(bot, his_update)
 
         # Response again
-        update.message.text = "/" + self.hd.response_handler_name()
-        self.hd.response_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.his_chat_id][0], screen_messages.ask_target_id())
-        bot.clear_msg_map()
+        his_update.message.text = "/" + self.hd.response_handler_name()
+        self.check_response_action(bot, his_update)
 
         # Response target id
-        update.message.text = "%s" % target_id
-        self.hd.set_value_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.his_chat_id][0], screen_messages.ask_response())
-        bot.clear_msg_map()
+        his_update.message.text = "%s" % target_id
+        self.check_response_target_id(bot, his_update)
 
         # Response message
-        update.message.text = response
-        self.hd.set_value_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.his_chat_id][0], screen_messages.ask_confirming_response(target_id, response))
-        bot.clear_msg_map()
+        his_update.message.text = response
+        self.check_response_message(bot, his_update, target_id)
 
         # No again
-        update.message.text = "/" + self.hd.no_handler_name()
-        self.hd.no_handler(bot, update)
-        self.assertEqual(bot.msg_map[self.his_chat_id][0], screen_messages.cancel_action())
-        self.assertEqual(bot.msg_map[self.his_chat_id][1], screen_messages.welcome(self.his_first_name))
-        bot.clear_msg_map()
+        his_update.message.text = "/" + self.hd.no_handler_name()
+        self.check_no(bot, his_update)
 
     def test_response(self):
         # Initialize db and hd
@@ -329,35 +367,42 @@ class handler_test(unittest.TestCase):
         my_source_id = self.hd.source_id
 
         # Start another user
-        update_opp = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
                                  last_name=self.his_last_name, phone_number=self.his_phone_number)
-        self.check_start(bot, update_opp)
+        self.check_start(bot, his_update)
 
         # Response
-        self.check_response(bot, update_opp, update, my_source_id, response)
+        self.check_response(bot, his_update, update, my_source_id, response)
 
         # Store his source id
         his_source_id = self.hd.source_id
 
         # I match
         update.message.text = "/" + self.hd.match_handler_name()
-        self.hd.match_handler(bot, update)
-        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_target_id())
-        bot.clear_msg_map()
+        self.check_match_action(bot, update)
 
         # Match id
         update.message.text = his_source_id
-        self.hd.set_value_handler(bot, update)
-        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_confirming_match(his_source_id))
-        bot.clear_msg_map()
+        self.check_match_target_id(bot, update)
 
         # Match confirm
         update.message.text = "/" + self.hd.yes_handler_name()
-        self.hd.yes_handler(bot, update)
-        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.confirm_match(his_source_id))
-        self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.match_and_wait_counterparty(his_source_id))
-        self.assertEqual(bot.msg_map[update.message.chat_id][2], screen_messages.welcome(update.message.from_user.first_name))
-        bot.clear_msg_map()
+        self.check_match_one_side(bot, update, his_source_id)
+        
+        # He matches
+        his_update.message.text = "/" + self.hd.match_handler_name()
+        self.check_match_action(bot, his_update)
+        
+        # Match id
+        his_update.message.text = my_source_id
+        self.check_match_target_id(bot, his_update)        
+
+        # Match confirm
+        update.message.text = "/" + self.hd.yes_handler_name()
+        self.check_match_two_side(bot, his_update, update, his_source_id, my_source_id)
+        
+        
+        
 
 if __name__ == '__main__':
     unittest.main()
