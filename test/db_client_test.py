@@ -7,6 +7,7 @@ from src.db_client import db_client
 from src.channel import channel
 from src.user_state import user_state
 from src.message import message
+from src.contact import contact
 from src.config import config
 
 class db_client_test(unittest.TestCase):
@@ -121,6 +122,26 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(message_record_from_row.source_id, message_record.source_id)
         self.assertEqual(message_record_from_row.source_chat_id, message_record.source_chat_id)
         self.assertEqual(message_record_from_row.msg, message_record.msg)
+
+        ########################################################################
+        # Contaccts
+        # Check if table is created
+        obj.cursor.execute('''delete from %s where 1 = 1''' % obj.contacts_table_name)
+        contact_record = contact(chat_id='123456',
+                                 phone_number='21223422',
+                                 first_name='David',
+                                 last_name='Jones')
+        obj.insert(obj.contacts_table_name, contact_record.str())
+
+        # Check if the row is inserted
+        row = obj.selectone(obj.contacts_table_name, "*")
+        contact_record_from_row = contact.from_contact_record(row, False)
+        self.assertEqual(contact_record_from_row.date, contact_record.date)
+        self.assertEqual(contact_record_from_row.time, contact_record.time)
+        self.assertEqual(contact_record_from_row.chat_id, contact_record.chat_id)
+        self.assertEqual(contact_record_from_row.phone_number, contact_record.phone_number)
+        self.assertEqual(contact_record_from_row.first_name, contact_record.first_name)
+        self.assertEqual(contact_record_from_row.last_name, contact_record.last_name)
 
         # Close the connection
         obj.close()

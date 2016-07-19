@@ -120,4 +120,4 @@ class channel:
 
     @staticmethod
     def match_index():
-        return 9
+        return 10

@@ -6,8 +6,9 @@ import datetime
 
 class config():
     def __init__(self, \
-                 conf_file = os.path.abspath(__file__ + "/../../config/config.yaml")):
-        self.mode = 'NORMAL'
+                 conf_file = os.path.abspath(__file__ + "/../../config/config.yaml"),
+                 mode='NORMAL'):
+        self.mode = mode
         self.api_token = ''
         self.channel_name = ''
         self.log_file = ''

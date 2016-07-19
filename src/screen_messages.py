@@ -74,3 +74,9 @@ class screen_messages():
     @staticmethod
     def ask_confirming_unmatch(target_id):
         return "Do you confirm to unmatch target ID %d?" % target_id
+
+    @staticmethod
+    def match_and_wait_counterparty(target_id):
+        return ("The counterparty %d has not yet agreed to match.\n" % target_id) + \
+               "Your contact has not yet been forwarded.\n" + \
+               "Once the counterparty agrees as well we will exchange the two contacts."

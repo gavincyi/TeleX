@@ -121,6 +121,71 @@ class handler:
 
         return local_chat_id, user_state_record
 
+    def get_last_channel(self, user_state_record):
+        """
+        Get the last channel record by the last_channel_id in object user_state
+        :param user_state_record: The object of user_state
+        :return: The object of channel if succeeded; otherwise None
+        """
+        row = self.database_client.selectone(self.database_client.channels_table_name,
+                                             "*",
+                                             "channelid=%d" % user_state_record.last_channel_id)
+        channel_record = channel.from_channel_record(row)
+
+        if channel_record.channel_id != user_state_record.last_channel_id:
+            # Error case of missing record in Channels
+            self.logger.warn("Cannot find channel.\nChannel id = %d\nChat id=%s" \
+                             % (user_state_record.last_channel_id, user_state_record.chat_id))
+            return None
+        else:
+            return channel_record
+
+    def get_last_message(self, channel_record):
+        """
+        Get the last message record by the last_msg_id in object channel
+        :param channel_record: The object of channel
+        :return: The object of message if succeeded; otherwise None
+        """
+        row = self.database_client.selectone(self.database_client.messages_table_name,
+                                             "*",
+                                             "msgid=%d" % channel_record.last_msg_id)
+        message_record = message.from_message_record(row)
+
+        if message_record.msg_id != channel_record.last_msg_id:
+            # Error case of missing record in Messages
+            self.logger.warn("Cannot find message.\nMessage id = %d\nChannel id = %d\n"
+                             % (channel_record.last_msg_id, channel_record.channel_id))
+            return None
+        else:
+            return message_record
+
+    def handler_by_replying(self, bot, update, \
+                            trans=user_state.transitions.UNDEF, \
+                            expected_state=user_state.states.UNDEF, \
+                            reply_msg=''):
+        """
+
+        :param bot: Callback bot
+        :param update: Callback update
+        :param trans: Transition in user_state
+        :param expected_state: Expected state in user_state
+        :param reply_msg: String, the reply message
+        """
+        local_chat_id, user_state_record = self.get_user_next_state(bot, update, trans)
+
+        if user_state_record.chat_id == str(local_chat_id) and \
+                        user_state_record.state == expected_state:
+            self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                                   user_state_record.str())
+            # Send out message
+            bot.sendMessage(local_chat_id,
+                            text=reply_msg,
+                            reply_markup=self.back_keyboard)
+        else:
+            self.logger.debug("%s: No transition of %d from %d to %d" \
+                              % (local_chat_id, trans, user_state_record.prev_state, expected_state))
+            self.no_handler(bot, update)
+
     def start_handler(self, bot, update):
         """
         Start handler
@@ -146,19 +211,10 @@ class handler:
         :param bot: Callback bot
         :param update: Callback update
         """
-        local_chat_id, user_state_record = self.get_user_next_state(bot, update, user_state.transitions.QUERYING)
-
-        if user_state_record.chat_id == str(local_chat_id) and \
-           user_state_record.state == user_state.states.QUERY_PENDING_MSG:
-            self.database_client.insert_or_replace(self.database_client.user_states_table_name,
-                                                   user_state_record.str())
-            # Send out message
-            bot.sendMessage(local_chat_id,
-                            text=screen_messages.ask_query(),
-                            reply_markup=self.back_keyboard)
-        else:
-            self.logger.warn("%s: No transition state for %s" % (local_chat_id, "QUERYING"))
-            self.no_handler(bot, update)
+        self.handler_by_replying(bot, update,
+                                 user_state.transitions.QUERYING,
+                                 user_state.states.QUERY_PENDING_MSG,
+                                 screen_messages.ask_query())
 
     def response_handler(self, bot, update):
         """
@@ -166,20 +222,10 @@ class handler:
         :param bot: Callback bot
         :param update: Callback update
         """
-        local_chat_id, user_state_record = self.get_user_next_state(bot, update, user_state.transitions.RESPONSING)
-
-        if user_state_record.chat_id == str(local_chat_id) and \
-           user_state_record.state == user_state.states.RESPONSE_PENDING_ID:
-            # Update user state
-            self.database_client.insert_or_replace(self.database_client.user_states_table_name,
-                                                   user_state_record.str())
-            # Send out message
-            bot.sendMessage(local_chat_id,
-                            text="Please input the target ID.",
-                            reply_markup=self.back_keyboard)
-        else:
-            self.logger.warn("%s: No transition state for %s" % (local_chat_id, "RESPONSING"))
-            self.no_handler(bot, update)
+        self.handler_by_replying(bot, update,
+                                 user_state.transitions.RESPONSING,
+                                 user_state.states.RESPONSE_PENDING_ID,
+                                 screen_messages.ask_target_id())
 
     def match_handler(self, bot, update):
         """
@@ -187,19 +233,10 @@ class handler:
         :param bot: Callback bot
         :param update: Callback update
         """
-        local_chat_id, user_state_record = self.get_user_next_state(bot, update, user_state.transitions.MATCHING)
-
-        if user_state_record.chat_id == str(local_chat_id) and \
-                        user_state_record.state == user_state.states.MATCH_PENDING_ID:
-            self.database_client.insert_or_replace(self.database_client.user_states_table_name,
-                                                   user_state_record.str())
-            # Send out message
-            bot.sendMessage(local_chat_id,
-                            text=screen_messages.ask_target_id(),
-                            reply_markup=self.back_keyboard)
-        else:
-            self.logger.warn("%s: No transition state for %s" % (local_chat_id, "MATCHING"))
-            self.no_handler(bot, update)
+        self.handler_by_replying(bot, update,
+                                 user_state.transitions.MATCHING,
+                                 user_state.states.MATCH_PENDING_ID,
+                                 screen_messages.ask_target_id())
 
     def unmatch_handler(self, bot, update):
         """
@@ -207,19 +244,10 @@ class handler:
         :param bot: Callback bot
         :param update: Callback update
         """
-        local_chat_id, user_state_record = self.get_user_next_state(bot, update, user_state.transitions.UNMATCHING)
-
-        if user_state_record.chat_id == str(local_chat_id) and \
-                        user_state_record.state == user_state.states.UNMATCH_PENDING_ID:
-            self.database_client.insert_or_replace(self.database_client.user_states_table_name,
-                                                   user_state_record.str())
-            # Send out message
-            bot.sendMessage(local_chat_id,
-                            text=screen_messages.ask_target_id(),
-                            reply_markup=self.back_keyboard)
-        else:
-            self.logger.warn("%s: No transition state for %s" % (local_chat_id, "UNMATCHING"))
-            self.no_handler(bot, update)
+        self.handler_by_replying(bot, update,
+                                 user_state.transitions.UNMATCHING,
+                                 user_state.states.UNMATCH_PENDING_ID,
+                                 screen_messages.ask_target_id())
 
     def yes_handler(self, bot, update):
         """
@@ -241,31 +269,23 @@ class handler:
             self.no_handler(bot, update)
 
     def query_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
-        row = self.database_client.selectone(self.database_client.channels_table_name,
-                                             "*",
-                                             "channelid=%d" % user_state_record.last_channel_id)
-        channel_record = channel.from_channel_record(row)
+        """
+        :param bot: Callback bot
+        :param update: Callback update
+        :param local_chat_id: Local chat id, in data type of Telegram chat id
+        :param user_state_record: The object user_state
+        """
+        channel_record = self.get_last_channel(user_state_record)
 
-        if channel_record.last_msg_id == 0:
+        if not channel_record:
             # Error case of missing record in Channels
-            self.logger.warn("Cannot find channel.\nChannel id = %d\nChat id=%d" \
-                             % (user_state_record.last_channel_id, local_chat_id))
-
-            # Handle same as "No" for error case
             self.no_handler(bot, update)
             return
 
-        row = self.database_client.selectone(self.database_client.messages_table_name,
-                                             "*",
-                                             "msgid=%d" % channel_record.last_msg_id)
-        message_record = message.from_message_record(row)
+        message_record = self.get_last_message(channel_record)
 
-        if message_record.source_chat_id != str(local_chat_id):
+        if not message_record:
             # Error case of missing record in Messages
-            self.logger.warn("Cannot find message.\nMessage id = %d\nChat id=%d" \
-                             % (channel_record.last_msg_id, local_chat_id))
-
-            # Handle same as "No" for error case
             self.no_handler(bot, update)
             return
 
@@ -287,20 +307,13 @@ class handler:
                         text=screen_messages.broadcast_query(message_record))
 
     def response_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
-        row = self.database_client.selectone(self.database_client.channels_table_name,
-                                             "*",
-                                             "channelid=%d" % user_state_record.last_channel_id)
-        channel_record = channel.from_channel_record(row)
+        channel_record = self.get_last_channel(user_state_record)
 
-        if channel_record.channel_id != user_state_record.last_channel_id or \
-                        channel_record.source_chat_id != str(local_chat_id):
+        if not channel_record:
             # Error case for not finding channel id
-            self.logger.warn("Channel id %d / Src id %d is not found." \
-                             % (user_state_record.last_channel_id, channel_record.source_chat_id))
             self.no_handler(bot, update)
             return
-
-        if channel_record.live == 0:
+        elif channel_record.live == 0:
             # The counterparty has closed the channel
             bot.sendMessage(local_chat_id,
                             text=screen_messages.inactivated_target_id(channel_record.target_id),
@@ -308,14 +321,10 @@ class handler:
             self.no_handler(bot, update)
             return
 
-        row = self.database_client.selectone(self.database_client.messages_table_name,
-                                             "*",
-                                             "msgid=%d" % channel_record.last_msg_id)
-        message_record = message.from_message_record(row)
+        message_record = self.get_last_message(channel_record)
 
-        if message_record.source_chat_id != str(local_chat_id):
+        if not message_record:
             # Error case of not finding source id in message
-            self.logger.warn("Src id %d is not found in message" % message_record.source_chat_id)
             self.no_handler(bot, update)
             return
 
@@ -332,20 +341,14 @@ class handler:
         self.start_handler(bot, update)
 
         # Send it back to the target id
-        bot.sendMessage(channel_record.target_chat_id,
+        bot.sendMessage(int(channel_record.target_chat_id),
                         text=screen_messages.broadcast_response(message_record))
 
     def match_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
-        row = self.database_client.selectone(self.database_client.channels_table_name,
-                                             "*",
-                                             "channelid=%d" % user_state_record.last_channel_id)
-        channel_record = channel.from_channel_record(row)
+        channel_record = self.get_last_channel(user_state_record)
 
-        if channel_record.channel_id != user_state_record.last_channel_id or \
-           channel_record.source_chat_id != str(local_chat_id):
+        if not channel_record:
             # Error case for not finding channel id
-            self.logger.warn("Channel id %d / Src id %d is not found." \
-                             % (user_state_record.last_channel_id, channel_record.source_chat_id))
             self.no_handler(bot, update)
             return
 
@@ -400,6 +403,9 @@ class handler:
 
         else:
             bot.sendMessage(local_chat_id,
+                            text=screen_messages.confirm_match(channel_record.target_id),
+                            reply_markup=telegram.ReplyKeyboardHide())
+            bot.sendMessage(local_chat_id,
                             text=screen_messages.match_and_wait_counterparty(channel_record.target_id),
                             reply_markup=telegram.ReplyKeyboardHide())
 
@@ -413,12 +419,12 @@ class handler:
                                                user_state_record.str())
         self.start_handler(bot, update)
 
-
     def unmatch_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
-        row = self.database_client.selectone(self.database_client.channels_table_name,
-                                             "*",
-                                             "channelid=%d" % user_state_record.last_channel_id)
-        channel_record = channel.from_channel_record(row)
+        channel_record = self.get_last_channel(user_state_record)
+
+        if not channel_record:
+            self.no_handler(bot, update)
+            return
 
         if channel_record.target_chat_id == str(local_chat_id) and channel_record.live == 1:
             # Close a query
@@ -510,16 +516,14 @@ class handler:
         :param update: Callback update
         :param user_state_record: User state object
         """
-        local_chat_id = update.message.chat_id
-        row = self.database_client.selectone(self.database_client.channels_table_name,
-                                             "*",
-                                             "channelid=%d" % user_state_record.last_channel_id)
-        channel_record = channel.from_channel_record(row)
+        channel_record = self.get_last_channel(user_state_record)
 
-        if channel_record.source_chat_id != str(local_chat_id) or \
-           channel_record.live == 0:
+        if not channel_record:
+            self.no_handler(bot, update)
+            return
+        elif channel_record.live == 0:
             # The channel is suddenly shutted down by the requester. Need to cancel the action
-            bot.sendMessage(local_chat_id,
+            bot.sendMessage(int(user_state_record.chat_id),
                             text=screen_messages.inactivated_target_id(channel_record.target_id),
                             reply_markup=telegram.ReplyKeyboardHide())
             self.no_handler(bot, update)
@@ -547,7 +551,7 @@ class handler:
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,
                                                user_state_record.str())
 
-        bot.sendMessage(local_chat_id,
+        bot.sendMessage(int(user_state_record.chat_id),
                         text=screen_messages.ask_confirming_response(channel_record.target_id, msg),
                         reply_markup=self.yes_no_keyboard)
 
@@ -670,8 +674,8 @@ class handler:
                                  source_id=source_id,
                                  source_chat_id=local_chat_id,
                                  msg=question)
-        self.database_client.insert(self.database_client.messages_table_name,
-                                    message_record.str())                                 
+        self.database_client.insert_or_replace(self.database_client.messages_table_name,
+                                               message_record.str())
 
         # Insert the channel into database
         channel_record = channel(channel_id=channel_id,
@@ -680,8 +684,8 @@ class handler:
                                  last_msg_id=message_id,
                                  public=1,
                                  live=1)
-        self.database_client.insert(self.database_client.channels_table_name,
-                                    channel_record.str())
+        self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                               channel_record.str())
 
         # Update user state
         user_state_record.last_channel_id = channel_id
@@ -763,4 +767,3 @@ class handler:
                                 text=screen_messages.inactivated_target_id(target_id),
                                 reply_markup=telegram.ReplyKeyboardHide())
                 self.no_handler(bot, update)
-

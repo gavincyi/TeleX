@@ -67,6 +67,7 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler(handler.match_handler_name(), msg_handler.match_handler))
     updater.dispatcher.add_handler(CommandHandler(handler.unmatch_handler_name(), msg_handler.unmatch_handler))
     updater.dispatcher.add_handler(MessageHandler([Filters.text], msg_handler.set_value_handler))
+    updater.dispatcher.add_handler(MessageHandler([Filters.contact], msg_handler.yes_handler))
 
     logger.info("Polling is started")
     updater.start_polling()

@@ -4,6 +4,7 @@ import sqlite3
 from src.channel import channel
 from src.message import message
 from src.user_state import user_state
+from src.contact import contact
 
 class db_client():
     """
@@ -48,6 +49,16 @@ class db_client():
             % (self.messages_table_name, self.messages_table_name, \
                message.key_str())
 
+        # contacts
+        self.contacts_table_name = 'Contacts'
+        self.create_contacts_table_sql = \
+            '''create table if not exists %s (%s)''' \
+            % (self.contacts_table_name, contact.field_str())
+        self.create_contacts_index_sql = \
+            '''create unique index %s_idx on %s(%s)''' \
+            % (self.contacts_table_name, self.contacts_table_name, \
+               contact.key_str())
+
     def init(self):
         self.conn = sqlite3.connect(self.db_file, check_same_thread=False)
         self.cursor = self.conn.cursor()
@@ -62,6 +73,9 @@ class db_client():
         self.cursor.execute(self.create_messages_table_sql)
         self.logger.info('Table %s is created' % self.create_messages_table_sql)
 
+        self.cursor.execute(self.create_contacts_table_sql)
+        self.logger.info('Table %s is created' % self.create_contacts_table_sql)
+
         # During cold start
         if self.cold:
             self.logger.info('Database is cold started')
@@ -75,6 +89,9 @@ class db_client():
 
             self.cursor.execute(self.create_messages_index_sql)
             self.logger.info('Table %s index is created' % self.messages_table_name)
+
+            self.cursor.execute(self.create_contacts_index_sql)
+            self.logger.info('Table %s index is created' % self.contacts_table_name)
 
         self.conn.commit()
 
