@@ -187,8 +187,26 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[opp_update.message.chat_id][1], \
                          bot_test.contact_str(phone_number=update.message.contact.phone_number,
                                               first_name=update.message.contact.first_name,
-                                              last_name=update.message.contact.last_name))                                              
-        
+                                              last_name=update.message.contact.last_name))
+        bot.clear_msg_map()
+
+    def check_unmatch_action(self, bot, update):
+        self.hd.unmatch_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_target_id())
+        bot.clear_msg_map()
+
+    def check_unmatch_target_id(self, bot, update):
+        self.hd.set_value_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0],\
+                         screen_messages.ask_confirming_unmatch(int(update.message.text)))
+        bot.clear_msg_map()
+
+    def check_unmatch_confirm(self, bot, update, target_id):
+        self.hd.yes_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0],\
+                         screen_messages.confirm_unmatch(target_id))
+        bot.clear_msg_map()
+
     def check_query(self, bot, update, query):
         update.message.text = "/" + self.hd.query_handler_name()
         self.check_query_action(bot, update)
@@ -217,11 +235,41 @@ class handler_test(unittest.TestCase):
         update.message_test = "/" + self.hd.yes_handler_name()
         self.check_response_confirm(bot, update, opp_update, target_id, response)
 
+    def check_unmatch(self, bot, update, target_id):
+        update.message.text = "/" + self.hd.unmatch_handler_name()
+        self.check_unmatch_action(bot, update)
+
+        update.message.text = str(target_id)
+        self.check_unmatch_target_id(bot, update)
+
+        update.message.text = "/" + self.hd.yes_handler_name()
+        self.check_unmatch_confirm(bot, update, target_id)
+
     def check_no(self, bot, update):
         self.hd.no_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.cancel_action())
         self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.welcome(update.message.from_user.first_name))
-        bot.clear_msg_map()        
+        bot.clear_msg_map()
+
+    def check_complete_conversation(self, bot, update, his_update, query, response):
+        self.check_start(bot, update)
+
+        # Send /Query
+        self.check_query(bot, update, query)
+
+        # Store my source id
+        my_source_id = self.hd.source_id
+
+        # Start another user
+        self.check_start(bot, his_update)
+
+        # Response
+        self.check_response(bot, his_update, update, my_source_id, response)
+
+        # Store his source id
+        his_source_id = self.hd.source_id
+
+        return my_source_id, his_source_id
 
     def test_start(self):
         # Initialize db and hd
@@ -332,22 +380,11 @@ class handler_test(unittest.TestCase):
         query = "Where can I find something?"
         response = "Nowhere."
 
-        # Start first
-        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name)
-        self.check_start(bot, update)
-
-        # Send /Query
-        self.check_query(bot, update, query)
-
-        # Store my source id
-        target_id = self.hd.source_id
-
-        # Start another user
-        update_opp = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name)
-        self.check_start(bot, update_opp)
-
-        # Response
-        self.check_response(bot, update_opp, update, target_id, response)
+        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
+                             last_name=self.my_last_name, phone_number=self.my_phone_number)
+        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+                                 last_name=self.his_last_name, phone_number=self.his_phone_number)
+        my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)
 
     def test_match(self):
         # Initialize db and hd
@@ -355,27 +392,11 @@ class handler_test(unittest.TestCase):
         query = "Where can I find something?"
         response = "Nowhere."
 
-        # Start first
         update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
                              last_name=self.my_last_name, phone_number=self.my_phone_number)
-        self.check_start(bot, update)
-
-        # Send /Query
-        self.check_query(bot, update, query)
-
-        # Store my source id
-        my_source_id = self.hd.source_id
-
-        # Start another user
         his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
                                  last_name=self.his_last_name, phone_number=self.his_phone_number)
-        self.check_start(bot, his_update)
-
-        # Response
-        self.check_response(bot, his_update, update, my_source_id, response)
-
-        # Store his source id
-        his_source_id = self.hd.source_id
+        my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)
 
         # I match
         update.message.text = "/" + self.hd.match_handler_name()
@@ -400,8 +421,23 @@ class handler_test(unittest.TestCase):
         # Match confirm
         update.message.text = "/" + self.hd.yes_handler_name()
         self.check_match_two_side(bot, his_update, update, his_source_id, my_source_id)
-        
-        
+
+    def test_unmatch_initiated_requester(self):
+        # Initialize db and hd
+        bot = bot_test()
+        query = "Where can I find something?"
+        response = "Nowhere."
+
+        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
+                             last_name=self.my_last_name, phone_number=self.my_phone_number)
+        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+                                 last_name=self.his_last_name, phone_number=self.his_phone_number)
+        my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)
+
+        # Unmatch by the requestor
+        self.check_unmatch(bot, update, his_source_id)
+
+
         
 
 if __name__ == '__main__':

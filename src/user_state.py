@@ -105,11 +105,14 @@ class user_state:
             }
     }
 
-    def __init__(self, chat_id='', \
-                       state=states.UNDEF, \
-                       prev_state=states.UNDEF,
-                       transition=transitions.UNDEF,
-                       last_channel_id=0):
+    def __init__(self,\
+                 chat_id='',\
+                 state=states.UNDEF,\
+                 prev_state=states.UNDEF,
+                 transition=transitions.UNDEF,
+                 last_channel_id=0,
+                 last_target_id=0,
+                 last_msg_id=0):
         curr_datetime = datetime.datetime.now()
         self.date = curr_datetime.strftime("%Y%m%d")
         self.time = curr_datetime.strftime("%H:%M:%S.%f %z")
@@ -118,19 +121,23 @@ class user_state:
         self.prev_state = prev_state
         self.transition = transition
         self.last_channel_id = last_channel_id
+        self.last_target_id = last_target_id
+        self.last_msg_id = last_msg_id
 
     def str(self):
         """
         Output the object into a comma separated string
         """              
-        return "'%s','%s','%s','%s','%s','%s',%d" % \
+        return "'%s','%s','%s','%s','%s','%s',%d,%d,%d" % \
               (self.date, \
                self.time, \
                self.chat_id, \
                user_state.states.to_str(self.state),
                user_state.states.to_str(self.prev_state),
                user_state.transitions.to_str(self.transition),
-               self.last_channel_id)
+               self.last_channel_id,
+               self.last_target_id,
+               self.last_msg_id)
 
     def jump(self, trans, undef_callback=None):
         """
@@ -171,7 +178,9 @@ class user_state:
                              state=user_state.states.from_str(record[user_state.state_index()]),
                              prev_state=user_state.states.from_str(record[user_state.prev_state_index()]),
                              transition=user_state.transitions.from_str(record[user_state.transition_index()]),
-                             last_channel_id=record[user_state.last_channel_id_index()])
+                             last_channel_id=record[user_state.last_channel_id_index()],
+                             last_target_id=record[user_state.last_target_id_index()],
+                             last_msg_id=record[user_state.last_msg_id_index()])
             if not set_curr_time:
                 ret.date = record[user_state.date_index()]
                 ret.time = record[user_state.time_index()]
@@ -181,7 +190,8 @@ class user_state:
     @staticmethod
     def field_str():
         return "date text, time text, chatid text, state text, " + \
-               "prevstate text, transit text, lastchannelid int"
+               "prevstate text, transit text, lastchannelid int, " + \
+               "lasttargetid int, lastmsgid int"
                
     @staticmethod
     def key_str():
@@ -215,3 +225,10 @@ class user_state:
     def last_channel_id_index():
         return 6
 
+    @staticmethod
+    def last_target_id_index():
+        return 7
+
+    @staticmethod
+    def last_msg_id_index():
+        return 8
