@@ -212,7 +212,8 @@ class handler:
         local_chat_id = update.message.chat_id
         us = user_state(chat_id=local_chat_id, 
                         state=user_state.states.START,
-                        last_channel_id=0)
+                        last_target_id=0,
+                        last_msg_id=0)
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,
                                                us.str())
 

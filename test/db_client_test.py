@@ -90,7 +90,8 @@ class db_client_test(unittest.TestCase):
         obj.cursor.execute('''delete from %s where 1 = 1''' % obj.user_states_table_name)
         user_state_record = user_state(chat_id='1234', 
                                        state=user_state.states.START,
-                                       last_channel_id=1)
+                                       last_target_id=123,
+                                       last_msg_id=456)
         obj.insert(obj.user_states_table_name, user_state_record.str())
 
         # Check if the row is inserted
@@ -100,6 +101,8 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(user_state_record_from_row.time, user_state_record.time)
         self.assertEqual(user_state_record_from_row.chat_id, user_state_record.chat_id)
         self.assertEqual(user_state_record_from_row.state, user_state_record.state)
+        self.assertEqual(user_state_record_from_row.last_target_id, user_state_record.last_target_id)
+        self.assertEqual(user_state_record_from_row.last_msg_id, user_state_record.last_msg_id)
 
         ########################################################################
         # Messages

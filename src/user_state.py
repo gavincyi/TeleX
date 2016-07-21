@@ -110,7 +110,6 @@ class user_state:
                  state=states.UNDEF,\
                  prev_state=states.UNDEF,
                  transition=transitions.UNDEF,
-                 last_channel_id=0,
                  last_target_id=0,
                  last_msg_id=0):
         curr_datetime = datetime.datetime.now()
@@ -120,7 +119,6 @@ class user_state:
         self.state = state
         self.prev_state = prev_state
         self.transition = transition
-        self.last_channel_id = last_channel_id
         self.last_target_id = last_target_id
         self.last_msg_id = last_msg_id
 
@@ -128,14 +126,13 @@ class user_state:
         """
         Output the object into a comma separated string
         """              
-        return "'%s','%s','%s','%s','%s','%s',%d,%d,%d" % \
+        return "'%s','%s','%s','%s','%s','%s',%d,%d" % \
               (self.date, \
                self.time, \
                self.chat_id, \
                user_state.states.to_str(self.state),
                user_state.states.to_str(self.prev_state),
                user_state.transitions.to_str(self.transition),
-               self.last_channel_id,
                self.last_target_id,
                self.last_msg_id)
 
@@ -178,7 +175,6 @@ class user_state:
                              state=user_state.states.from_str(record[user_state.state_index()]),
                              prev_state=user_state.states.from_str(record[user_state.prev_state_index()]),
                              transition=user_state.transitions.from_str(record[user_state.transition_index()]),
-                             last_channel_id=record[user_state.last_channel_id_index()],
                              last_target_id=record[user_state.last_target_id_index()],
                              last_msg_id=record[user_state.last_msg_id_index()])
             if not set_curr_time:
@@ -190,7 +186,7 @@ class user_state:
     @staticmethod
     def field_str():
         return "date text, time text, chatid text, state text, " + \
-               "prevstate text, transit text, lastchannelid int, " + \
+               "prevstate text, transit text, " + \
                "lasttargetid int, lastmsgid int"
                
     @staticmethod
@@ -222,13 +218,9 @@ class user_state:
         return 5
 
     @staticmethod
-    def last_channel_id_index():
+    def last_target_id_index():
         return 6
 
     @staticmethod
-    def last_target_id_index():
-        return 7
-
-    @staticmethod
     def last_msg_id_index():
-        return 8
+        return 7

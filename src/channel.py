@@ -4,8 +4,7 @@ import datetime
 
 class channel:
     def __init__(self, channel_id=0, source_id=0, source_chat_id='',\
-                 target_id=0, target_chat_id='', last_msg_id=0,
-                 public=0, live=1, match=0):
+                 target_id=0, target_chat_id='', public=0, live=1, match=0):
         """
         Constructor
         """
@@ -17,7 +16,6 @@ class channel:
         self.source_chat_id = source_chat_id
         self.target_id = target_id
         self.target_chat_id = target_chat_id
-        self.last_msg_id = last_msg_id
         self.public = public
         self.live = live
         self.match = match
