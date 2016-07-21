@@ -84,3 +84,13 @@ class screen_messages():
     @staticmethod
     def match_send_contact(target_id):
         return ("The following is the contact of target id %d" % target_id)
+
+    @staticmethod
+    def reject_multiply_match(target_id):
+        return ("Action matching target ID %d has been sent." % target_id) + \
+               "Please wait for the opponent to send matching if you haven't received his/her contact."
+
+    @staticmethod
+    def reject_multiply_unmatch(target_id):
+        return ("Target ID %d has been blocked." % target_id) + \
+               "If you still can receive the opponent's response. Please send /help to report it"
