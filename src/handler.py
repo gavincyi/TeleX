@@ -140,7 +140,7 @@ class handler:
         else:
             return channel_record
 
-    def get_last_message(self, channel_record):
+    def get_last_message(self, last_msg_id):
         """
         Get the last message record by the last_msg_id in object channel
         :param channel_record: The object of channel
@@ -148,13 +148,12 @@ class handler:
         """
         row = self.database_client.selectone(self.database_client.messages_table_name,
                                              "*",
-                                             "msgid=%d" % channel_record.last_msg_id)
+                                             "msgid=%d" % last_msg_id)
         message_record = message.from_message_record(row)
 
-        if message_record.msg_id != channel_record.last_msg_id:
+        if message_record.msg_id != last_msg_id:
             # Error case of missing record in Messages
-            self.logger.warn("Cannot find message.\nMessage id = %d\nChannel id = %d\n"
-                             % (channel_record.last_msg_id, channel_record.channel_id))
+            self.logger.warn("Cannot find message.\nMessage id = %d" % last_msg_id)
             return None
         else:
             return message_record
@@ -275,14 +274,7 @@ class handler:
         :param local_chat_id: Local chat id, in data type of Telegram chat id
         :param user_state_record: The object user_state
         """
-        channel_record = self.get_last_channel(user_state_record)
-
-        if not channel_record:
-            # Error case of missing record in Channels
-            self.no_handler(bot, update)
-            return
-
-        message_record = self.get_last_message(channel_record)
+        message_record = self.get_last_message(user_state_record.last_msg_id)
 
         if not message_record:
             # Error case of missing record in Messages
@@ -293,9 +285,19 @@ class handler:
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,
                                                user_state_record.str())
 
+        # Insert channel
+        channel_record = channel(channel_id=self.get_next_channel_id(),
+                                 target_id=user_state_record.last_target_id,
+                                 target_chat_id=user_state_record.chat_id,
+                                 public=1,
+                                 live=1,
+                                 match=0)
+        self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                               channel_record.str())
+
         # Acknowledge the user
         bot.sendMessage(local_chat_id,
-                        text=screen_messages.confirm_send_query(message_record.source_id, \
+                        text=screen_messages.confirm_send_query(message_record.source_id,
                                                                 message_record.msg),
                         reply_markup=telegram.ReplyKeyboardHide())
 
@@ -307,13 +309,70 @@ class handler:
                         text=screen_messages.broadcast_query(message_record))
 
     def response_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
-
-        message_record = self.get_last_message(channel_record)
+        message_record = self.get_last_message(user_state_record.last_msg_id)
 
         if not message_record:
             # Error case of not finding source id in message
             self.no_handler(bot, update)
             return
+
+        # Create channel
+        row = self.database_client.selectone(self.database_client.channels_table_name,
+                                             "*",
+                                             "targetid=%d and sourcechatid='%s'" \
+                                             % (user_state_record.last_target_id, user_state_record.chat_id))
+        channel_record = channel.from_channel_record(row)
+
+        if channel_record.target_id == user_state_record.last_target_id and \
+           channel_record.source_chat_id == user_state_record.chat_id and \
+           channel_record.live == 1:
+            # Continue the opened channel
+            target_chat_id=int(channel_record.target_chat_id)
+            message_record.source_id=channel_record.source_id
+            message_record.channel_id=channel_record.channel_id
+        else:
+            row = self.database_client.selectone(self.database_client.channels_table_name,
+                                                 "*",
+                                                 "targetid=%d and sourcechatid='' and public=1 and live=1" \
+                                                 % user_state_record.last_target_id)
+            channel_record = channel.from_channel_record(row)
+            if channel_record.target_id == user_state_record.last_target_id and \
+               channel_record.public == 1 and \
+               channel_record.live == 1:
+                # The target id is a query. Create a two way channel
+                channel_src2tar = channel(channel_id=self.get_next_channel_id(),
+                                          source_id=self.get_next_source_id(),
+                                          source_chat_id=user_state_record.chat_id,
+                                          target_id=channel_record.target_id,
+                                          target_chat_id=channel_record.target_chat_id,
+                                          public=0,
+                                          live=1,
+                                          match=0)
+                channel_tar2src = channel(channel_id=self.get_next_channel_id(),
+                                          source_id=channel_record.target_id,
+                                          source_chat_id=channel_record.target_chat_id,
+                                          target_id=channel_src2tar.source_id,
+                                          target_chat_id=user_state_record.chat_id,
+                                          public=0,
+                                          live=1,
+                                          match=0)
+                target_chat_id=int(channel_src2tar.target_chat_id)
+                message_record.source_id=channel_src2tar.source_id
+                message_record.channel_id=channel_src2tar.channel_id
+                self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                                       channel_src2tar.str())
+                self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                                       channel_tar2src.str())
+            else:
+                bot.sendMessage(local_chat_id,
+                                text=screen_messages.inactivated_target_id(user_state_record.last_target_id),
+                                reply_markup=telegram.ReplyKeyboardHide())
+                self.start_handler(bot,update)
+                return
+
+        # Update message
+        self.database_client.insert_or_replace(self.database_client.messages_table_name,
+                                               message_record.str())
 
         # Update user state
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,
@@ -321,14 +380,14 @@ class handler:
 
         # Acknowledge the user
         bot.sendMessage(local_chat_id,
-                        text=screen_messages.confirm_send_response_to_target(channel_record.target_id),
+                        text=screen_messages.confirm_send_response_to_target(user_state_record.last_target_id),
                         reply_markup=telegram.ReplyKeyboardHide())
 
         # Change the state of the user first
         self.start_handler(bot, update)
 
         # Send it back to the target id
-        bot.sendMessage(int(channel_record.target_chat_id),
+        bot.sendMessage(int(target_chat_id),
                         text=screen_messages.broadcast_response(message_record))
 
     def match_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
@@ -519,7 +578,7 @@ class handler:
                                                user_state_record.str())
 
         bot.sendMessage(int(user_state_record.chat_id),
-                        text=screen_messages.ask_confirming_response(user_state_record.target_id, msg),
+                        text=screen_messages.ask_confirming_response(user_state_record.last_target_id, msg),
                         reply_markup=self.yes_no_keyboard)
 
     def response_msg_set_value_handler(self, bot, update, user_state_record):
@@ -569,30 +628,19 @@ class handler:
         local_chat_id = update.message.chat_id
         question = update.message.text
         source_id = self.get_next_source_id()
-        channel_id = self.get_next_channel_id()
         message_id = self.get_next_message_id()
 
         # Insert the message into database
         message_record = message(msg_id=message_id,
-                                 channel_id=channel_id,
                                  source_id=source_id,
                                  source_chat_id=local_chat_id,
                                  msg=question)
         self.database_client.insert_or_replace(self.database_client.messages_table_name,
                                                message_record.str())
 
-        # Insert the channel into database
-        channel_record = channel(channel_id=channel_id,
-                                 target_id=source_id,
-                                 target_chat_id=local_chat_id,
-                                 last_msg_id=message_id,
-                                 public=1,
-                                 live=1)
-        self.database_client.insert_or_replace(self.database_client.channels_table_name,
-                                               channel_record.str())
-
         # Update user state
-        user_state_record.last_channel_id = channel_id
+        user_state_record.last_target_id=source_id
+        user_state_record.last_msg_id=message_id
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,
                                                user_state_record.str())
 

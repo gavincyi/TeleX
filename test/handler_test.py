@@ -353,7 +353,7 @@ class handler_test(unittest.TestCase):
         # Response target id
         his_update.message.text = "%s" % target_id
         self.check_response_target_id(bot, his_update)
-        
+
         # No again
         his_update.message.text = "/" + self.hd.no_handler_name()
         self.check_no(bot, his_update)
@@ -386,59 +386,57 @@ class handler_test(unittest.TestCase):
                                  last_name=self.his_last_name, phone_number=self.his_phone_number)
         my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)
 
-    def test_match(self):
-        # Initialize db and hd
-        bot = bot_test()
-        query = "Where can I find something?"
-        response = "Nowhere."
+    # def test_match(self):
+    #     # Initialize db and hd
+    #     bot = bot_test()
+    #     query = "Where can I find something?"
+    #     response = "Nowhere."
+    #
+    #     update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
+    #                          last_name=self.my_last_name, phone_number=self.my_phone_number)
+    #     his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+    #                              last_name=self.his_last_name, phone_number=self.his_phone_number)
+    #     my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)
+    #
+    #     # I match
+    #     update.message.text = "/" + self.hd.match_handler_name()
+    #     self.check_match_action(bot, update)
+    #
+    #     # Match id
+    #     update.message.text = his_source_id
+    #     self.check_match_target_id(bot, update)
+    #
+    #     # Match confirm
+    #     update.message.text = "/" + self.hd.yes_handler_name()
+    #     self.check_match_one_side(bot, update, his_source_id)
+    #
+    #     # He matches
+    #     his_update.message.text = "/" + self.hd.match_handler_name()
+    #     self.check_match_action(bot, his_update)
+    #
+    #     # Match id
+    #     his_update.message.text = my_source_id
+    #     self.check_match_target_id(bot, his_update)
+    #
+    #     # Match confirm
+    #     update.message.text = "/" + self.hd.yes_handler_name()
+    #     self.check_match_two_side(bot, his_update, update, his_source_id, my_source_id)
+    #
+    # def test_unmatch_initiated_requester(self):
+    #     # Initialize db and hd
+    #     bot = bot_test()
+    #     query = "Where can I find something?"
+    #     response = "Nowhere."
+    #
+    #     update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
+    #                          last_name=self.my_last_name, phone_number=self.my_phone_number)
+    #     his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+    #                              last_name=self.his_last_name, phone_number=self.his_phone_number)
+    #     my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)
+    #
+    #     # Unmatch by the requestor
+    #     self.check_unmatch(bot, update, his_source_id)
 
-        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
-                             last_name=self.my_last_name, phone_number=self.my_phone_number)
-        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
-                                 last_name=self.his_last_name, phone_number=self.his_phone_number)
-        my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)
-
-        # I match
-        update.message.text = "/" + self.hd.match_handler_name()
-        self.check_match_action(bot, update)
-
-        # Match id
-        update.message.text = his_source_id
-        self.check_match_target_id(bot, update)
-
-        # Match confirm
-        update.message.text = "/" + self.hd.yes_handler_name()
-        self.check_match_one_side(bot, update, his_source_id)
-        
-        # He matches
-        his_update.message.text = "/" + self.hd.match_handler_name()
-        self.check_match_action(bot, his_update)
-        
-        # Match id
-        his_update.message.text = my_source_id
-        self.check_match_target_id(bot, his_update)        
-
-        # Match confirm
-        update.message.text = "/" + self.hd.yes_handler_name()
-        self.check_match_two_side(bot, his_update, update, his_source_id, my_source_id)
-
-    def test_unmatch_initiated_requester(self):
-        # Initialize db and hd
-        bot = bot_test()
-        query = "Where can I find something?"
-        response = "Nowhere."
-
-        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
-                             last_name=self.my_last_name, phone_number=self.my_phone_number)
-        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
-                                 last_name=self.his_last_name, phone_number=self.his_phone_number)
-        my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)
-
-        # Unmatch by the requestor
-        self.check_unmatch(bot, update, his_source_id)
-
-
-        
 
 if __name__ == '__main__':
     unittest.main()
