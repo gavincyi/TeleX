@@ -190,7 +190,7 @@ class handler:
         local_chat_id, user_state_record = self.get_user_next_state(bot, update, trans)
 
         if user_state_record.chat_id == str(local_chat_id) and \
-                        user_state_record.state == expected_state:
+           user_state_record.state == expected_state:
             self.database_client.insert_or_replace(self.database_client.user_states_table_name,
                                                    user_state_record.str())
             # Send out message
@@ -198,8 +198,9 @@ class handler:
                             text=reply_msg,
                             reply_markup=self.back_keyboard)
         else:
-            self.logger.debug("%s: No transition of %d from %d to %d" \
-                              % (local_chat_id, trans, user_state_record.prev_state, expected_state))
+            self.logger.debug("%s: No transition of %d from %d to %d (%s)" \
+                              % (local_chat_id, trans, user_state_record.prev_state, expected_state, 
+                                 user_state_record.str()))
             self.no_handler(bot, update)
 
     def start_handler(self, bot, update):
@@ -342,12 +343,19 @@ class handler:
         channel_record = channel.from_channel_record(row)
 
         if channel_record.target_id == user_state_record.last_target_id and \
-           channel_record.source_chat_id == user_state_record.chat_id and \
-           channel_record.live == 1:
-            # Continue the opened channel
-            target_chat_id=int(channel_record.target_chat_id)
-            message_record.source_id=channel_record.source_id
-            message_record.channel_id=channel_record.channel_id
+           channel_record.source_chat_id == user_state_record.chat_id:
+            if channel_record.live == 1:
+                # Continue the opened channel
+                target_chat_id=int(channel_record.target_chat_id)
+                message_record.source_id=channel_record.source_id
+                message_record.channel_id=channel_record.channel_id
+            else:
+                # The channel has been closed
+                bot.sendMessage(local_chat_id,
+                                text=screen_messages.inactivated_target_id(user_state_record.last_target_id),
+                                reply_markup=telegram.ReplyKeyboardHide())
+                self.no_handler(bot,update)
+                return                
         else:
             row = self.database_client.selectone(self.database_client.channels_table_name,
                                                  "*",
@@ -385,7 +393,7 @@ class handler:
                 bot.sendMessage(local_chat_id,
                                 text=screen_messages.inactivated_target_id(user_state_record.last_target_id),
                                 reply_markup=telegram.ReplyKeyboardHide())
-                self.start_handler(bot,update)
+                self.no_handler(bot,update)
                 return
 
         # Update message
@@ -459,7 +467,7 @@ class handler:
                 bot.sendMessage(local_chat_id,
                                 text=screen_messages.inactivated_target_id(user_state_record.last_target_id),
                                 reply_markup=telegram.ReplyKeyboardHide())
-                self.start_handler(bot, update)
+                self.no_handler(bot, update)
                 return
 
             # Confirm matching
@@ -480,6 +488,7 @@ class handler:
                     bot.sendMessage(local_chat_id,
                                     text=screen_messages.inactivated_target_id(user_state_record.last_target_id),
                                     reply_markup=telegram.ReplyKeyboardHide())
+                    self.no_handler(bot, update)                                    
                     return
 
                 # Exchanging contact
@@ -505,7 +514,7 @@ class handler:
         else:
             bot.sendMessage(local_chat_id,
                             text=screen_messages.inactivated_target_id(user_state_record.last_target_id))
-            self.start_handler(bot, update)
+            self.no_handler(bot, update)
             return
 
         self.start_handler(bot, update)
@@ -551,7 +560,7 @@ class handler:
             row = self.database_client.selectone(self.database_client.channels_table_name,
                                                  "*",
                                                  "targetid=%d and sourcechatid=''" \
-                                                 % (user_state_record.last_target_id, user_state_record.chat_id))
+                                                 % (user_state_record.last_target_id))
             channel_record = channel.from_channel_record(row)
 
             if channel_record.target_id == user_state_record.last_target_id and \
@@ -579,7 +588,7 @@ class handler:
                 bot.sendMessage(local_chat_id,
                                 text=screen_messages.inactivated_target_id(user_state_record.last_target_id),
                                 reply_markup=telegram.ReplyKeyboardHide())
-                self.start_handler(bot, update)
+                self.no_handler(bot, update)
                 return
 
         # Restarted
@@ -669,7 +678,7 @@ class handler:
         if target_id == 0:
             # Target id is not a positive integer
             bot.sendMessage(local_chat_id,
-                            text=screen_messages.inactivated_target_id(target_id),
+                            text=screen_messages.inactivated_target_id(update.message.text),
                             reply_markup=telegram.ReplyKeyboardHide())
             self.no_handler(bot, update)
             return

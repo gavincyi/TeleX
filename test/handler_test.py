@@ -16,9 +16,11 @@ class logger_test():
     def __init__(self):
         pass
     def info(self, text):
-        pass
+        print(text)
     def warn(self, text):
-        pass
+        print(text)
+    def debug(self, text):
+        print(text)
 
 
 class update_test():
@@ -156,7 +158,14 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.welcome(update.message.from_user.first_name))
         self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split("\n")[1], "Source ID: %d" % self.hd.source_id)
         self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split("\n")[2], "Response: %s" % response)
-        bot.clear_msg_map()        
+        bot.clear_msg_map()    
+        
+    def check_response_decline(self, bot, update, target_id, response):
+        self.hd.yes_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.inactivated_target_id(target_id))
+        self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.cancel_action())
+        self.assertEqual(bot.msg_map[update.message.chat_id][2], screen_messages.welcome(update.message.from_user.first_name))
+        bot.clear_msg_map()          
         
     def check_match_action(self, bot, update):
         self.hd.match_handler(bot, update)
@@ -209,6 +218,9 @@ class handler_test(unittest.TestCase):
         bot.clear_msg_map()
 
     def check_query(self, bot, update, query):
+        self.check_start(bot, update)
+        
+        # Action query
         update.message.text = "/" + self.hd.query_handler_name()
         self.check_query_action(bot, update)
 
@@ -220,7 +232,10 @@ class handler_test(unittest.TestCase):
         update.message.text = "/" + handler.yes_handler_name()
         self.check_query_confirm(bot, update, query)
 
-    def check_response(self, bot, update, opp_update, target_id, response):
+    def check_response(self, bot, update, opp_update, target_id, response, confirmed=True):
+        self.check_start(bot, update)
+        
+        # Action response
         update.message.text = "/" + self.hd.response_handler_name()
         self.check_response_action(bot, update)
 
@@ -234,7 +249,24 @@ class handler_test(unittest.TestCase):
 
         # Confirm response message
         update.message_test = "/" + self.hd.yes_handler_name()
-        self.check_response_confirm(bot, update, opp_update, target_id, response)
+        if confirmed:
+            self.check_response_confirm(bot, update, opp_update, target_id, response)
+        else:
+            self.check_response_decline(bot, update, target_id, response)
+            
+    def check_response_invalid_id(self, bot, update, target_id):            
+        self.check_start(bot, update)
+        
+        # Action response
+        update.message.text = "/" + self.hd.response_handler_name()
+        self.check_response_action(bot, update)   
+        
+        # Response target id
+        update.message.text = "%s" % target_id
+        self.hd.set_value_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.inactivated_target_id(target_id))  
+        self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.cancel_action())
+        self.assertEqual(bot.msg_map[update.message.chat_id][2], screen_messages.welcome(update.message.from_user.first_name))
 
     def check_unmatch(self, bot, update, target_id):
         update.message.text = "/" + self.hd.unmatch_handler_name()
@@ -437,8 +469,72 @@ class handler_test(unittest.TestCase):
 
         # Unmatch by the requestor
         self.check_unmatch(bot, update, his_source_id)
+        
+        # Check the channel is dead
+        self.check_response(bot, update, his_update, his_source_id, response, False)
+        self.check_response(bot, his_update, update, my_source_id, response, False)
 
+    def test_unmatch_initiated_responser(self):
+        # Initialize db and hd
+        bot = bot_test()
+        query = "Where can I find something?"
+        response = "Nowhere."
 
+        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
+                             last_name=self.my_last_name, phone_number=self.my_phone_number)
+        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+                                 last_name=self.his_last_name, phone_number=self.his_phone_number)
+        my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)
+
+        # Unmatch by the requestor
+        self.check_unmatch(bot, his_update, my_source_id)
+        
+        # Check the channel is dead
+        self.check_response(bot, update, his_update, his_source_id, response, False)
+        self.check_response(bot, his_update, update, my_source_id, response, False)
+
+    def test_unmatch_query(self):
+        # Initialize db and hd
+        bot = bot_test()
+        query = "Where can I find something?"
+        response = "Nowhere."
+
+        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
+                             last_name=self.my_last_name, phone_number=self.my_phone_number)
+        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+                                 last_name=self.his_last_name, phone_number=self.his_phone_number)
+
+        # Query first
+        self.check_query(bot, update, query)                             
+        
+        # Store my source id
+        my_source_id = self.hd.source_id        
+
+        # Unmatch by the requestor
+        self.check_unmatch(bot, update, my_source_id)
+        
+        # Check the channel is dead
+        self.check_response(bot, his_update, update, my_source_id, response, False)
+
+    def test_invalid_response(self):
+        # Initialize db and hd
+        bot = bot_test()
+        query = "Where can I find something?"
+        response = "Nowhere."
+
+        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
+                             last_name=self.my_last_name, phone_number=self.my_phone_number)
+        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+                                 last_name=self.his_last_name, phone_number=self.his_phone_number)        
+                                 
+        # Query first
+        self.check_query(bot, update, query)                             
+        
+        # Store my source id
+        my_source_id = self.hd.source_id                                    
+        
+        # Check the response fails
+        self.check_response_invalid_id(bot, his_update, 'abcd')
 
 if __name__ == '__main__':
     unittest.main()
