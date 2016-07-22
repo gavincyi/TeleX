@@ -267,6 +267,7 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.inactivated_target_id(target_id))  
         self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.cancel_action())
         self.assertEqual(bot.msg_map[update.message.chat_id][2], screen_messages.welcome(update.message.from_user.first_name))
+        bot.clear_msg_map()
 
     def check_unmatch(self, bot, update, target_id):
         update.message.text = "/" + self.hd.unmatch_handler_name()
@@ -535,6 +536,15 @@ class handler_test(unittest.TestCase):
         
         # Check the response fails
         self.check_response_invalid_id(bot, his_update, 'abcd')
+        
+        # Check the response fails
+        self.check_response_invalid_id(bot, his_update, '0')                
+        
+        # Check the response fails
+        self.check_response_invalid_id(bot, his_update, '-123')       
+        
+        # Check the response fails
+        self.check_response(bot, his_update, update, 12345678, response, False)        
 
 if __name__ == '__main__':
     unittest.main()
