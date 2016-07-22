@@ -24,7 +24,7 @@ class channel:
         """
         Output the object into a comma separated string
         """        
-        return "'%s','%s',%d,%d,'%s',%d,'%s',%d,%d,%d,%d" % \
+        return "'%s','%s',%d,%d,'%s',%d,'%s',%d,%d,%d" % \
                (self.date, \
                 self.time, \
                 self.channel_id, \
@@ -32,7 +32,6 @@ class channel:
                 self.source_chat_id, \
                 self.target_id, \
                 self.target_chat_id, \
-                self.last_msg_id, \
                 self.public, \
                 self.live, \
                 self.match)
@@ -52,7 +51,6 @@ class channel:
                           source_chat_id=row[channel.source_chat_id_index()],
                           target_id=row[channel.target_id_index()],
                           target_chat_id=row[channel.target_chat_id_index()],
-                          last_msg_id=row[channel.last_msg_id_index()],
                           public=row[channel.public_index()],
                           live=row[channel.live_index()],
                           match=row[channel.match_index()])
@@ -66,7 +64,7 @@ class channel:
     def field_str():
         return "date text, time text, channelid int, sourceid int, " + \
                "sourcechatid text, targetid int, targetchatid text, " + \
-               "lastmsgid int, public int, live int, match int"
+               "public int, live int, match int"
         
     @staticmethod
     def key_str():
@@ -103,19 +101,15 @@ class channel:
     @staticmethod
     def target_chat_id_index():
         return 6
-
-    @staticmethod
-    def last_msg_id_index():
-        return 7        
         
     @staticmethod
     def public_index():
-        return 8
+        return 7
         
     @staticmethod
     def live_index():
-        return 9
+        return 8
 
     @staticmethod
     def match_index():
-        return 10
+        return 9
