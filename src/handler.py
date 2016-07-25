@@ -730,7 +730,7 @@ class handler:
         if target_id == 0:
             # Target id is not a positive integer
             bot.sendMessage(local_chat_id,
-                            text=screen_messages.inactivated_target_id(target_id),
+                            text=screen_messages.inactivated_target_id(user_state_record.last_target_id),
                             reply_markup=telegram.ReplyKeyboardHide())
             self.no_handler(bot, update)
             return
@@ -752,7 +752,7 @@ class handler:
         if target_id == 0:
             # Target id is not a positive integer
             bot.sendMessage(local_chat_id,
-                            text=screen_messages.inactivated_target_id(target_id),
+                            text=screen_messages.inactivated_target_id(update.message.text),
                             reply_markup=telegram.ReplyKeyboardHide())
             self.no_handler(bot, update)
             return

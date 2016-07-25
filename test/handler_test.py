@@ -160,7 +160,7 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split("\n")[2], "Response: %s" % response)
         bot.clear_msg_map()    
         
-    def check_response_decline(self, bot, update, target_id, response):
+    def check_target_id_decline(self, bot, update, target_id):
         self.hd.yes_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.inactivated_target_id(target_id))
         self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.cancel_action())
@@ -199,6 +199,28 @@ class handler_test(unittest.TestCase):
                                               first_name=update.message.contact.first_name,
                                               last_name=update.message.contact.last_name))
         bot.clear_msg_map()
+
+    def check_match(self, bot, update, target_id, opp_update=None, source_id=None, succeed=True):
+        self.check_start(bot, update)
+        
+        # Match action
+        update.message.text = "/" + self.hd.match_handler_name()
+        self.check_match_action(bot, update)
+
+        # Match id
+        update.message.text = target_id
+        self.check_match_target_id(bot, update)
+
+        # Match confirm
+        update.message.text = "/" + self.hd.yes_handler_name()
+        if not opp_update or not source_id:
+            if succeed:
+                self.check_match_one_side(bot, update, target_id)
+            else:
+                self.check_invalid_target_id(update, target_id)
+        else:
+            self.check_match_two_side(bot, update, opp_update, target_id, source_id)
+        
 
     def check_unmatch_action(self, bot, update):
         self.hd.unmatch_handler(bot, update)
@@ -252,8 +274,50 @@ class handler_test(unittest.TestCase):
         if confirmed:
             self.check_response_confirm(bot, update, opp_update, target_id, response)
         else:
-            self.check_response_decline(bot, update, target_id, response)
+            self.check_target_id_decline(bot, update, target_id)
             
+    def check_invalid_target_id(self, bot, update, target_id):            
+        self.hd.set_value_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.inactivated_target_id(target_id))  
+        self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.cancel_action())
+        self.assertEqual(bot.msg_map[update.message.chat_id][2], screen_messages.welcome(update.message.from_user.first_name))
+        bot.clear_msg_map()        
+
+    def check_unmatch(self, bot, update, target_id, succeed=True):
+        update.message.text = "/" + self.hd.unmatch_handler_name()
+        self.check_unmatch_action(bot, update)
+
+        update.message.text = str(target_id)
+        self.check_unmatch_target_id(bot, update)
+
+        update.message.text = "/" + self.hd.yes_handler_name()
+        if succeed:
+            self.check_unmatch_confirm(bot, update, target_id)
+        else:
+            self.check_target_id_decline(bot, update, target_id)
+            
+    def check_match_invalid_id(self, bot, update, target_id):            
+        self.check_start(bot, update)
+        
+        # Action response
+        update.message.text = "/" + self.hd.match_handler_name()
+        self.check_unmatch_action(bot, update)   
+        
+        # Response target id
+        update.message.text = "%s" % target_id
+        self.check_invalid_target_id(bot, update, target_id)    
+        
+    def check_unmatch_invalid_id(self, bot, update, target_id):            
+        self.check_start(bot, update)
+        
+        # Action response
+        update.message.text = "/" + self.hd.unmatch_handler_name()
+        self.check_unmatch_action(bot, update)   
+        
+        # Response target id
+        update.message.text = "%s" % target_id
+        self.check_invalid_target_id(bot, update, target_id)        
+        
     def check_response_invalid_id(self, bot, update, target_id):            
         self.check_start(bot, update)
         
@@ -263,21 +327,7 @@ class handler_test(unittest.TestCase):
         
         # Response target id
         update.message.text = "%s" % target_id
-        self.hd.set_value_handler(bot, update)
-        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.inactivated_target_id(target_id))  
-        self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.cancel_action())
-        self.assertEqual(bot.msg_map[update.message.chat_id][2], screen_messages.welcome(update.message.from_user.first_name))
-        bot.clear_msg_map()
-
-    def check_unmatch(self, bot, update, target_id):
-        update.message.text = "/" + self.hd.unmatch_handler_name()
-        self.check_unmatch_action(bot, update)
-
-        update.message.text = str(target_id)
-        self.check_unmatch_target_id(bot, update)
-
-        update.message.text = "/" + self.hd.yes_handler_name()
-        self.check_unmatch_confirm(bot, update, target_id)
+        self.check_invalid_target_id(bot, update, target_id)
 
     def check_no(self, bot, update):
         self.hd.no_handler(bot, update)
@@ -516,7 +566,7 @@ class handler_test(unittest.TestCase):
         
         # Check the channel is dead
         self.check_response(bot, his_update, update, my_source_id, response, False)
-
+        
     def test_invalid_response(self):
         # Initialize db and hd
         bot = bot_test()
@@ -544,7 +594,55 @@ class handler_test(unittest.TestCase):
         self.check_response_invalid_id(bot, his_update, '-123')       
         
         # Check the response fails
-        self.check_response(bot, his_update, update, 12345678, response, False)        
+        self.check_response(bot, his_update, update, 12345678, response, False)            
+
+    # def test_invalid_match(self):
+    #     # Initialize db and hd
+    #     bot = bot_test()
+    #     query = "Where can I find something?"
+    #     response = "Nowhere."
+
+    #     update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
+    #                          last_name=self.my_last_name, phone_number=self.my_phone_number)
+    #     his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+    #                              last_name=self.his_last_name, phone_number=self.his_phone_number)        
+    #     my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)                                 
+        
+    #     # Check the unmatch fails
+    #     self.check_match_invalid_id(bot, his_update, 'abcd')
+        
+    #     # Check the unmatch fails
+    #     self.check_match_invalid_id(bot, his_update, '0')                
+        
+    #     # Check the unmatch fails
+    #     self.check_match_invalid_id(bot, his_update, '-123')       
+        
+    #     # Check the unmatch fails
+    #     self.check_match(bot, his_update, update, 12345678, succeed=False)  
+        
+    def test_invalid_unmatch(self):
+        # Initialize db and hd
+        bot = bot_test()
+        query = "Where can I find something?"
+        response = "Nowhere."
+
+        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
+                             last_name=self.my_last_name, phone_number=self.my_phone_number)
+        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+                                 last_name=self.his_last_name, phone_number=self.his_phone_number)        
+        my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)                                 
+        
+        # Check the unmatch fails
+        self.check_unmatch_invalid_id(bot, his_update, 'abcd')
+        
+        # Check the unmatch fails
+        self.check_unmatch_invalid_id(bot, his_update, '0')                
+        
+        # Check the unmatch fails
+        self.check_unmatch_invalid_id(bot, his_update, '-123')       
+        
+        # Check the unmatch fails
+        self.check_unmatch(bot, update, 12345678, False)     
 
 if __name__ == '__main__':
     unittest.main()

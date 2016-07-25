@@ -52,7 +52,10 @@ class screen_messages():
 
     @staticmethod
     def inactivated_target_id(target_id):
-        return "Target ID (%s) is closed or no longer valid." % str(target_id)
+        try:
+            return "Target ID (%d) is closed or no longer valid." % target_id
+        except:
+            return "Target ID (%s) is closed or no longer valid." % target_id
 
     @staticmethod
     def cancel_action():
@@ -69,7 +72,10 @@ class screen_messages():
 
     @staticmethod
     def ask_confirming_match(target_id):
-        return "Do you confirm to match target ID %d?" % target_id
+        try:
+            return "Do you confirm to match target ID %d?" % target_id
+        except:
+            return "Do you confirm to match target ID %s?" % target_id
 
     @staticmethod
     def ask_confirming_unmatch(target_id):
