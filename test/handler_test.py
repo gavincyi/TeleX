@@ -217,7 +217,7 @@ class handler_test(unittest.TestCase):
             if succeed:
                 self.check_match_one_side(bot, update, target_id)
             else:
-                self.check_invalid_target_id(update, target_id)
+                self.check_target_id_decline(bot, update, target_id)
         else:
             self.check_match_two_side(bot, update, opp_update, target_id, source_id)
         
@@ -596,29 +596,29 @@ class handler_test(unittest.TestCase):
         # Check the response fails
         self.check_response(bot, his_update, update, 12345678, response, False)            
 
-    # def test_invalid_match(self):
-    #     # Initialize db and hd
-    #     bot = bot_test()
-    #     query = "Where can I find something?"
-    #     response = "Nowhere."
+    def test_invalid_match(self):
+        # Initialize db and hd
+        bot = bot_test()
+        query = "Where can I find something?"
+        response = "Nowhere."
 
-    #     update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
-    #                          last_name=self.my_last_name, phone_number=self.my_phone_number)
-    #     his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
-    #                              last_name=self.his_last_name, phone_number=self.his_phone_number)        
-    #     my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)                                 
+        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name,
+                             last_name=self.my_last_name, phone_number=self.my_phone_number)
+        his_update = update_test(chat_id=self.his_chat_id, text="/start", first_name=self.his_first_name,
+                                 last_name=self.his_last_name, phone_number=self.his_phone_number)
+        my_source_id, his_source_id = self.check_complete_conversation(bot, update, his_update, query, response)
         
-    #     # Check the unmatch fails
-    #     self.check_match_invalid_id(bot, his_update, 'abcd')
+        # Check the unmatch fails
+        self.check_match_invalid_id(bot, his_update, 'abcd')
         
-    #     # Check the unmatch fails
-    #     self.check_match_invalid_id(bot, his_update, '0')                
+        # Check the unmatch fails
+        self.check_match_invalid_id(bot, his_update, '0')
         
-    #     # Check the unmatch fails
-    #     self.check_match_invalid_id(bot, his_update, '-123')       
+        # Check the unmatch fails
+        self.check_match_invalid_id(bot, his_update, '-123')
         
-    #     # Check the unmatch fails
-    #     self.check_match(bot, his_update, update, 12345678, succeed=False)  
+        # Check the unmatch fails
+        self.check_match(bot, his_update, 12345678, succeed=False)
         
     def test_invalid_unmatch(self):
         # Initialize db and hd
