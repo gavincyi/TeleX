@@ -14,7 +14,6 @@ class channel_test(unittest.TestCase):
                          source_chat_id='123456',
                          target_id=11,
                          target_chat_id='654321',
-                         last_msg_id=399,
                          public=1,
                          live=1,
                          match=1)
@@ -30,7 +29,6 @@ class channel_test(unittest.TestCase):
         self.assertEqual(channel_record.source_chat_id, channel_record_from_row.source_chat_id)
         self.assertEqual(channel_record.target_id, channel_record_from_row.target_id)
         self.assertEqual(channel_record.target_chat_id, channel_record_from_row.target_chat_id)
-        self.assertEqual(channel_record.last_msg_id, channel_record_from_row.last_msg_id)
         self.assertEqual(channel_record.public, channel_record_from_row.public)
         self.assertEqual(channel_record.live, channel_record_from_row.live)
         self.assertEqual(channel_record.match, channel_record_from_row.match)
@@ -42,7 +40,6 @@ class channel_test(unittest.TestCase):
         self.assertEqual('', channel_record_from_row.source_chat_id)
         self.assertEqual(0, channel_record_from_row.target_id)
         self.assertEqual('', channel_record_from_row.target_chat_id)        
-        self.assertEqual(0, channel_record_from_row.last_msg_id)
         self.assertEqual(0, channel_record_from_row.public)
         self.assertEqual(1, channel_record_from_row.live)
         self.assertEqual(0, channel_record_from_row.match)

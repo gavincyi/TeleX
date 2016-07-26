@@ -34,7 +34,6 @@ class db_client_test(unittest.TestCase):
                                  source_chat_id='123456',
                                  target_id=15,
                                  target_chat_id='654321',
-                                 last_msg_id=50,
                                  public=1,
                                  live=1)
         obj.insert(obj.channels_table_name, channel_record.str())                                 
@@ -50,12 +49,10 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(channel_record_from_row.source_chat_id, channel_record.source_chat_id)
         self.assertEqual(channel_record_from_row.target_id, channel_record.target_id)
         self.assertEqual(channel_record_from_row.target_chat_id, channel_record.target_chat_id)
-        self.assertEqual(channel_record_from_row.last_msg_id, channel_record.last_msg_id)
         self.assertEqual(channel_record_from_row.public, channel_record.public)
         self.assertEqual(channel_record_from_row.live, channel_record.live)
         
         # Update the row
-        channel_record.last_msg_id = 700
         channel_record.public = 0
         channel_record.live = 0
         obj.insert_or_replace(obj.channels_table_name, channel_record.str())
@@ -68,7 +65,6 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(channel_record_from_row.source_chat_id, channel_record.source_chat_id)
         self.assertEqual(channel_record_from_row.target_id, channel_record.target_id)
         self.assertEqual(channel_record_from_row.target_chat_id, channel_record.target_chat_id)
-        self.assertEqual(channel_record_from_row.last_msg_id, channel_record.last_msg_id)
         self.assertEqual(channel_record_from_row.public, channel_record.public)
         self.assertEqual(channel_record_from_row.live, channel_record.live)
         
@@ -80,7 +76,6 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(channel_record_from_row.source_chat_id, channel_record.source_chat_id)
         self.assertEqual(channel_record_from_row.target_id, channel_record.target_id)
         self.assertEqual(channel_record_from_row.target_chat_id, channel_record.target_chat_id)
-        self.assertEqual(channel_record_from_row.last_msg_id, channel_record.last_msg_id)
         self.assertEqual(channel_record_from_row.public, channel_record.public)
         self.assertEqual(channel_record_from_row.live, channel_record.live)
 
@@ -90,7 +85,8 @@ class db_client_test(unittest.TestCase):
         obj.cursor.execute('''delete from %s where 1 = 1''' % obj.user_states_table_name)
         user_state_record = user_state(chat_id='1234', 
                                        state=user_state.states.START,
-                                       last_channel_id=1)
+                                       last_target_id=123,
+                                       last_msg_id=456)
         obj.insert(obj.user_states_table_name, user_state_record.str())
 
         # Check if the row is inserted
@@ -100,6 +96,8 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(user_state_record_from_row.time, user_state_record.time)
         self.assertEqual(user_state_record_from_row.chat_id, user_state_record.chat_id)
         self.assertEqual(user_state_record_from_row.state, user_state_record.state)
+        self.assertEqual(user_state_record_from_row.last_target_id, user_state_record.last_target_id)
+        self.assertEqual(user_state_record_from_row.last_msg_id, user_state_record.last_msg_id)
 
         ########################################################################
         # Messages
