@@ -35,7 +35,7 @@ class db_client_test(unittest.TestCase):
                                  target_id=15,
                                  target_chat_id='654321',
                                  public=1,
-                                 live=1)
+                                 type=1)
         obj.insert(obj.channels_table_name, channel_record.str())                                 
         
         # Check if the row is inserted
@@ -50,11 +50,11 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(channel_record_from_row.target_id, channel_record.target_id)
         self.assertEqual(channel_record_from_row.target_chat_id, channel_record.target_chat_id)
         self.assertEqual(channel_record_from_row.public, channel_record.public)
-        self.assertEqual(channel_record_from_row.live, channel_record.live)
+        self.assertEqual(channel_record_from_row.type, channel_record.type)
         
         # Update the row
         channel_record.public = 0
-        channel_record.live = 0
+        channel_record.type = 0
         obj.insert_or_replace(obj.channels_table_name, channel_record.str())
         
         # Check if the row is inserted
@@ -66,7 +66,7 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(channel_record_from_row.target_id, channel_record.target_id)
         self.assertEqual(channel_record_from_row.target_chat_id, channel_record.target_chat_id)
         self.assertEqual(channel_record_from_row.public, channel_record.public)
-        self.assertEqual(channel_record_from_row.live, channel_record.live)
+        self.assertEqual(channel_record_from_row.type, channel_record.type)
         
         row = obj.selectone(obj.channels_table_name, "*", "targetchatid='654321' and sourceid=10")
         channel_record_from_row = channel.from_channel_record(row, False)        
@@ -77,7 +77,7 @@ class db_client_test(unittest.TestCase):
         self.assertEqual(channel_record_from_row.target_id, channel_record.target_id)
         self.assertEqual(channel_record_from_row.target_chat_id, channel_record.target_chat_id)
         self.assertEqual(channel_record_from_row.public, channel_record.public)
-        self.assertEqual(channel_record_from_row.live, channel_record.live)
+        self.assertEqual(channel_record_from_row.type, channel_record.type)
 
         ########################################################################
         # User_states

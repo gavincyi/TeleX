@@ -22,6 +22,10 @@ class screen_messages():
         return "What is your response?"
 
     @staticmethod
+    def ask_help():
+        return "Please tell us your inquiries or feedback. We'll get you back as soon as possible"
+
+    @staticmethod
     def confirm_send_query(source_id, query):
         return "Query has been sent.\nSource ID: %d\nQuery: %s" % (source_id, query)
 
@@ -41,6 +45,10 @@ class screen_messages():
                 "If it is a private communication, the counterparty will not send message to you."
 
     @staticmethod
+    def confirm_help(source_id, query):
+        return "Your inquiry or feedback has been forwarded.\nHelp ID: %d\nMessage: %s" % (source_id, query)
+
+    @staticmethod
     def broadcast_query(message_record):
         return "Time: %s %s\nSource ID: %d\nQuery: %s" \
                % (message_record.date, message_record.time[0:8], message_record.source_id, message_record.msg)
@@ -49,6 +57,12 @@ class screen_messages():
     def broadcast_response(message_record):
         return "Time: %s %s\nSource ID: %d\nResponse: %s" \
                % (message_record.date, message_record.time[0:8], message_record.source_id, message_record.msg)
+
+    @staticmethod
+    def broadcast_help(message_record):
+        return "Time: %s %s\nSource ID: %d\nChat ID: %s\nMessage: %s" \
+               % (message_record.date, message_record.time[0:8], message_record.source_id, \
+                  message_record.source_chat_id, message_record.msg)
 
     @staticmethod
     def inactivated_target_id(target_id):
@@ -80,6 +94,12 @@ class screen_messages():
     @staticmethod
     def ask_confirming_unmatch(target_id):
         return "Do you confirm to unmatch target ID %d?" % target_id
+
+    @staticmethod
+    def ask_confirming_help(msg):
+        return ("Please confirm to send out the following inquiry or feedback:\n%s\n" % msg) + \
+               "It will be directly forwarded to our support team. We will get your back in 48 hours.\n" + \
+               "Thank you for your precious response to our team."
 
     @staticmethod
     def match_and_wait_counterparty(target_id):

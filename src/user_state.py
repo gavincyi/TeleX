@@ -15,6 +15,8 @@ class user_state:
         MATCH_PENDING_CONFIRM = 8
         UNMATCH_PENDING_ID = 9
         UNMATCH_PENDING_CONFIRM = 10
+        HELP_PENDING_MSG = 11
+        HELP_PENDING_CONFIRM = 12
 
         @staticmethod
         def from_str(state):
@@ -36,6 +38,7 @@ class user_state:
         RESPONSING = 4
         MATCHING = 5
         UNMATCHING = 6
+        HELPING = 7
 
         @staticmethod
         def from_str(trans):
@@ -57,6 +60,7 @@ class user_state:
                 transitions.RESPONSING : states.RESPONSE_PENDING_ID,
                 transitions.MATCHING : states.MATCH_PENDING_ID,
                 transitions.UNMATCHING : states.UNMATCH_PENDING_ID,
+                transitions.HELPING : states.HELP_PENDING_MSG
             },
         states.QUERY_PENDING_MSG:
             {
@@ -99,6 +103,16 @@ class user_state:
                 transitions.NO : states.START
             },
         states.UNMATCH_PENDING_CONFIRM:
+            {
+                transitions.YES : states.START,
+                transitions.NO : states.START
+            },
+        states.HELP_PENDING_MSG:
+            {
+                transitions.YES : states.HELP_PENDING_CONFIRM,
+                transitions.NO : states.START
+            },
+        states.HELP_PENDING_CONFIRM:
             {
                 transitions.YES : states.START,
                 transitions.NO : states.START

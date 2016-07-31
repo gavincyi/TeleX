@@ -3,8 +3,13 @@
 import datetime
 
 class channel:
+    class channel_type:
+        DEAD = 0
+        LIVE = 1
+        HELP = 2
+
     def __init__(self, channel_id=0, source_id=0, source_chat_id='',\
-                 target_id=0, target_chat_id='', public=0, live=1, match=0):
+                 target_id=0, target_chat_id='', public=0, type=channel_type.DEAD, match=0):
         """
         Constructor
         """
@@ -17,7 +22,7 @@ class channel:
         self.target_id = target_id
         self.target_chat_id = target_chat_id
         self.public = public
-        self.live = live
+        self.type = type
         self.match = match
 
     def str(self):
@@ -33,7 +38,7 @@ class channel:
                 self.target_id, \
                 self.target_chat_id, \
                 self.public, \
-                self.live, \
+                self.type, \
                 self.match)
 
     @staticmethod
@@ -52,7 +57,7 @@ class channel:
                           target_id=row[channel.target_id_index()],
                           target_chat_id=row[channel.target_chat_id_index()],
                           public=row[channel.public_index()],
-                          live=row[channel.live_index()],
+                          type=row[channel.type_index()],
                           match=row[channel.match_index()])
             if not set_curr_time:
                 ret.date = row[channel.date_index()]
@@ -64,7 +69,7 @@ class channel:
     def field_str():
         return "date text, time text, channelid int, sourceid int, " + \
                "sourcechatid text, targetid int, targetchatid text, " + \
-               "public int, live int, match int"
+               "public int, type int, match int"
         
     @staticmethod
     def key_str():
@@ -107,7 +112,7 @@ class channel:
         return 7
         
     @staticmethod
-    def live_index():
+    def type_index():
         return 8
 
     @staticmethod
