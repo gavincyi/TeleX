@@ -243,6 +243,25 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[update.message.chat_id][2], screen_messages.welcome(update.message.from_user.first_name))
         bot.clear_msg_map()
 
+    def check_help_action(self, bot, update):
+        self.hd.help_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_help())
+        bot.clear_msg_map()
+
+    def check_help_question(self, bot, update, msg):
+        self.hd.set_value_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.ask_confirming_help(msg))
+        bot.clear_msg_map()
+
+    def check_help_confirm(self, bot, update, msg):
+        self.hd.yes_handler(bot, update)
+        self.assertEqual(bot.msg_map[update.message.chat_id][0], screen_messages.confirm_help(self.hd.source_id, msg))
+        self.assertEqual(bot.msg_map[update.message.chat_id][1], screen_messages.welcome(update.message.from_user.first_name))
+        self.assertEqual(bot.msg_map[handler_test.conf.help_channel_name][0].split('\n')[1], "Source ID: %d" % self.hd.source_id)
+        self.assertEqual(bot.msg_map[handler_test.conf.help_channel_name][0].split('\n')[2], "Chat ID: %d" % update.message.chat_id)
+        self.assertEqual(bot.msg_map[handler_test.conf.help_channel_name][0].split('\n')[3], "Message: " + msg)
+        bot.clear_msg_map()
+
     def check_query(self, bot, update, query):
         self.check_start(bot, update)
         
@@ -304,6 +323,21 @@ class handler_test(unittest.TestCase):
 
         update.message.text = "/" + self.hd.yes_handler_name()
         self.check_unmatch_confirm(bot, update, target_id)
+
+    def check_help(self, bot, update, msg):
+        self.check_start(bot, update)
+
+        # Action query
+        update.message.text = "/" + self.hd.help_handler_name()
+        self.check_help_action(bot, update)
+
+        # Send query question
+        update.message.text = msg
+        self.check_help_question(bot, update, msg)
+
+        # Send yes to confirm the query
+        update.message.text = "/" + handler.yes_handler_name()
+        self.check_help_confirm(bot, update, msg)
 
     def check_response_fail(self, bot, update, target_id, response, failure=fail_reason.UNDEFINED):
         self.check_start(bot, update)
@@ -483,7 +517,6 @@ class handler_test(unittest.TestCase):
 
         # Start first
         update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name)
-        self.check_start(bot, update)
 
         # Send /Query
         self.check_query(bot, update, query)
@@ -576,6 +609,17 @@ class handler_test(unittest.TestCase):
 
         # Fail to match again
         self.check_match_fail(bot, update, his_source_id, failure=fail_reason.REPEATED_ACTION)
+
+    def test_help(self):
+        # Initialize db and hd
+        bot = bot_test()
+        message = "Come on. There are some bugs."
+
+        # Start first
+        update = update_test(chat_id=self.my_chat_id, text="/start", first_name=self.my_first_name)
+
+        # Send /Query
+        self.check_help(bot, update, message)
 
     def test_unmatch_initiated_requester(self):
         # Initialize db and hd

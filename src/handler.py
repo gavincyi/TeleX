@@ -13,6 +13,7 @@ class handler:
         self.conf = conf
         self.session = 0
         self.channel_name = conf.channel_name
+        self.help_channel_name = conf.help_channel_name
         self.source_id = 0
         self.channel_id = 0
         self.message_id = 0
@@ -267,6 +268,17 @@ class handler:
                                  user_state.states.UNMATCH_PENDING_ID,
                                  screen_messages.ask_target_id())
 
+    def help_handler(self, bot, update):
+        """
+        Help handler
+        :param bot: Callback bot
+        :param update: Callback update
+        """
+        self.handler_by_replying(bot, update,
+                                 user_state.transitions.HELPING,
+                                 user_state.states.HELP_PENDING_MSG,
+                                 screen_messages.ask_help())
+
     def yes_handler(self, bot, update):
         """
         Yes button handler
@@ -283,8 +295,28 @@ class handler:
             self.match_confirmed_yes_handler(bot, update, local_chat_id, user_state_record)
         elif user_state_record.prev_state == user_state.states.UNMATCH_PENDING_CONFIRM:
             self.unmatch_confirmed_yes_handler(bot, update, local_chat_id, user_state_record)
+        elif user_state_record.prev_state == user_state.states.HELP_PENDING_CONFIRM:
+            self.help_confirmed_yes_handler(bot, update, local_chat_id, user_state_record)
         else:
             self.no_handler(bot, update)
+
+    def no_handler(self, bot, update):
+        """
+        No button handler
+        :param bot: Callback bot
+        :param update: Callback update
+        """
+        local_chat_id, user_state_record = self.get_user_next_state(bot, update, user_state.transitions.NO)
+
+        # Update user state
+        self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                               user_state_record.str())
+
+        # Send out message
+        bot.sendMessage(local_chat_id,
+                        text=screen_messages.cancel_action(),
+                        reply_markup=telegram.ReplyKeyboardHide())
+        self.start_handler(bot, update)
 
     def query_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
         """
@@ -309,7 +341,7 @@ class handler:
                                  target_id=user_state_record.last_target_id,
                                  target_chat_id=user_state_record.chat_id,
                                  public=1,
-                                 live=1,
+                                 type=channel.channel_type.LIVE,
                                  match=0)
         self.database_client.insert_or_replace(self.database_client.channels_table_name,
                                                channel_record.str())
@@ -344,7 +376,7 @@ class handler:
 
         if channel_record.target_id == user_state_record.last_target_id and \
            channel_record.source_chat_id == user_state_record.chat_id:
-            if channel_record.live == 1:
+            if channel_record.type == channel.channel_type.LIVE:
                 # Continue the opened channel
                 target_chat_id=int(channel_record.target_chat_id)
                 message_record.source_id=channel_record.source_id
@@ -359,12 +391,12 @@ class handler:
         else:
             row = self.database_client.selectone(self.database_client.channels_table_name,
                                                  "*",
-                                                 "targetid=%d and sourcechatid='' and public=1 and live=1" \
-                                                 % user_state_record.last_target_id)
+                                                 "targetid=%d and sourcechatid='' and public=1 and type=%d" \
+                                                 % (user_state_record.last_target_id, channel.channel_type.LIVE))
             channel_record = channel.from_channel_record(row)
             if channel_record.target_id == user_state_record.last_target_id and \
                channel_record.public == 1 and \
-               channel_record.live == 1:
+               channel_record.type == channel.channel_type.LIVE:
                 # The target id is a query. Create a two way channel
                 channel_src2tar = channel(channel_id=self.get_next_channel_id(),
                                           source_id=self.get_next_source_id(),
@@ -372,7 +404,7 @@ class handler:
                                           target_id=channel_record.target_id,
                                           target_chat_id=channel_record.target_chat_id,
                                           public=0,
-                                          live=1,
+                                          type=channel.channel_type.LIVE,
                                           match=0)
                 channel_tar2src = channel(channel_id=self.get_next_channel_id(),
                                           source_id=channel_record.target_id,
@@ -380,7 +412,7 @@ class handler:
                                           target_id=channel_src2tar.source_id,
                                           target_chat_id=user_state_record.chat_id,
                                           public=0,
-                                          live=1,
+                                          type=channel.channel_type.LIVE,
                                           match=0)
                 target_chat_id=int(channel_src2tar.target_chat_id)
                 message_record.source_id=channel_src2tar.source_id
@@ -429,7 +461,7 @@ class handler:
 
         if channel_record.target_id == user_state_record.last_target_id and \
            channel_record.source_chat_id == user_state_record.chat_id and \
-           channel_record.live == 1:
+           channel_record.type == channel.channel_type.LIVE:
             if channel_record.match == 1:
                 # Matched before
                 bot.sendMessage(local_chat_id,
@@ -460,7 +492,7 @@ class handler:
 
             if channel_record_reverse.target_id != channel_record.source_id or \
                channel_record_reverse.source_chat_id != channel_record.target_chat_id or \
-               channel_record_reverse.live == 0:
+               channel_record_reverse.type != channel.channel_type.LIVE:
                 # Error case
                 self.logger.warn("Error in getting channel record.\nTargetID=%d\nSourceChatID=%s" \
                                  % (channel_record.source_id, channel_record.target_chat_id))
@@ -533,9 +565,9 @@ class handler:
         if channel_record.target_id == user_state_record.last_target_id and \
            channel_record.source_chat_id == user_state_record.chat_id:
             # Opened channel
-            if channel_record.live == 1:
+            if channel_record.type == channel.channel_type.LIVE:
                 # Channel is still open. Close it!
-                channel_record.live = 0
+                channel_record.type = channel.channel_type.DEAD
                 self.database_client.insert_or_replace(self.database_client.channels_table_name,
                                                        channel_record.str())
 
@@ -545,9 +577,9 @@ class handler:
                                                  "targetid=%d and sourcechatid='%s'" \
                                                  % (channel_record.source_id, channel_record.target_chat_id))
             channel_record = channel.from_channel_record(row)
-            if channel_record.live == 1:
+            if channel_record.type == channel.channel_type.LIVE:
                 # Channel is still open. Close it!
-                channel_record.live = 0
+                channel_record.type = channel.channel_type.DEAD
                 self.database_client.insert_or_replace(self.database_client.channels_table_name,
                                                        channel_record.str())
 
@@ -566,7 +598,7 @@ class handler:
             if channel_record.target_id == user_state_record.last_target_id and \
                channel_record.target_chat_id == user_state_record.chat_id and \
                channel_record.public == 1:
-                if channel_record.live == 0:
+                if channel_record.type != channel.channel_type.LIVE:
                     # Closed before
                     bot.sendMessage(local_chat_id,
                                     text=screen_messages.reject_multiply_unmatch(user_state_record.last_target_id),
@@ -575,7 +607,7 @@ class handler:
                     return
                 else:
                     # Close query
-                    channel_record.live = 0
+                    channel_record.type = channel.channel_type.DEAD
                     self.database_client.insert_or_replace(self.database_client.channels_table_name,
                                                            channel_record.str())
 
@@ -594,31 +626,46 @@ class handler:
         # Restarted
         self.start_handler(bot, update)
 
-    def no_handler(self, bot, update):
+    def help_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
         """
-        No button handler
         :param bot: Callback bot
         :param update: Callback update
+        :param local_chat_id: Local chat id, in data type of Telegram chat id
+        :param user_state_record: The object user_state
         """
-        local_chat_id, user_state_record = self.get_user_next_state(bot, update, user_state.transitions.NO)
+        message_record = self.get_last_message(user_state_record.last_msg_id)
+
+        if not message_record:
+            # Error case of missing record in Messages
+            self.no_handler(bot, update)
+            return
 
         # Update user state
         self.database_client.insert_or_replace(self.database_client.user_states_table_name,
                                                user_state_record.str())
 
-        # Send out message
+        # Insert channel
+        channel_record = channel(channel_id=self.get_next_channel_id(),
+                                 target_id=user_state_record.last_target_id,
+                                 target_chat_id=user_state_record.chat_id,
+                                 public=1,
+                                 type=channel.channel_type.HELP,
+                                 match=0)
+        self.database_client.insert_or_replace(self.database_client.channels_table_name,
+                                               channel_record.str())
+
+        # Acknowledge the user
         bot.sendMessage(local_chat_id,
-                        text=screen_messages.cancel_action(),
+                        text=screen_messages.confirm_help(message_record.source_id,
+                                                          message_record.msg),
                         reply_markup=telegram.ReplyKeyboardHide())
+
+        # Change the state of the user first
         self.start_handler(bot, update)
 
-    def help_handler(self, bot, update):
-        """
-        Help handler
-        :param bot: Callback bot
-        :param update: Callback update
-        """
-        self.logger.info("Not yet implemented")
+        # Broadcast it in the channel
+        bot.sendMessage(self.help_channel_name,
+                        text=screen_messages.broadcast_help(message_record))
 
     def set_value_handler(self, bot, update):
         """
@@ -639,6 +686,8 @@ class handler:
                 self.match_confirm_set_value_handler(bot, update, user_state_record)
             elif user_state_record.state == user_state.states.UNMATCH_PENDING_CONFIRM:
                 self.unmatch_confirm_set_value_handler(bot, update, user_state_record)
+            elif user_state_record.state == user_state.states.HELP_PENDING_CONFIRM:
+                self.help_confirm_set_value_handler(bot, update, user_state_record)
 
     def response_confirm_set_value_handler(self, bot, update, user_state_record):
         """
@@ -764,4 +813,35 @@ class handler:
 
         bot.sendMessage(update.message.chat_id,
                         text=screen_messages.ask_confirming_unmatch(target_id),
+                        reply_markup=self.yes_no_keyboard)
+
+    def help_confirm_set_value_handler(self, bot, update, user_state_record):
+        """
+        Free text on state HELP_PENDING_MSG handler
+        :param bot: Callback bot
+        :param update: Callback update
+        :param user_state_record: User state object
+        """
+        local_chat_id = update.message.chat_id
+        question = update.message.text
+        source_id = self.get_next_source_id()
+        message_id = self.get_next_message_id()
+
+        # Insert the message into database
+        message_record = message(msg_id=message_id,
+                                 source_id=source_id,
+                                 source_chat_id=local_chat_id,
+                                 msg=question)
+        self.database_client.insert_or_replace(self.database_client.messages_table_name,
+                                               message_record.str())
+
+        # Update user state
+        user_state_record.last_target_id=source_id
+        user_state_record.last_msg_id=message_id
+        self.database_client.insert_or_replace(self.database_client.user_states_table_name,
+                                               user_state_record.str())
+
+        # Acknowledge the demand
+        bot.sendMessage(update.message.chat_id,
+                        text=screen_messages.ask_confirming_help(question),
                         reply_markup=self.yes_no_keyboard)

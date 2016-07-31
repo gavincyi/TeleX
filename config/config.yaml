@@ -1,5 +1,6 @@
 api_token: '<API_TOKEN>'
 channel_name: '<CHANNEL_NAME>'
+help_channel_name: '<HELP_CHANNEL_NAME>'
 log_path: '<LOG_PATH - e.g. /./../../production/>'
 log_prefix: '<LOG_PREFIX - e.g. telex_prod>'
 db_path: '<DB_PATH - e.g. /./../../db/telex.sqlite>'

@@ -1,5 +1,6 @@
 api_token: '12345678'
 channel_name: 'TestingChannel'
+help_channel_name: 'TestingHelpChannel'
 log_path: '/./../../test'
 log_prefix: 'telex_test'
 db_path: '/./../../test/handler_test.sqlite'
