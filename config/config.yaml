@@ -1,3 +1,4 @@
+platform_name: '<PLATFORM>'
 api_token: '<API_TOKEN>'
 channel_name: '<CHANNEL_NAME>'
 help_channel_name: '<HELP_CHANNEL_NAME>'

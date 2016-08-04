@@ -5,6 +5,7 @@ from functools import partial
 from src.handler import handler
 from src.db_client import db_client
 from src.config import config
+from src.user_interface import user_interface
 import logging
 import sys
 
@@ -50,9 +51,12 @@ if __name__ == '__main__':
     database_client = db_client(logger, conf)
     if not database_client.init():
         logger.warn('Database is failed to initialise')
+        
+    # Set up user interface
+    ui = user_interface(conf.platform, conf.channel_name)
 
     # Set up handler
-    msg_handler = handler(logger, conf)
+    msg_handler = handler(logger, conf, ui)
     msg_handler.init_db(database_client)
 
     # Set up telegram bot

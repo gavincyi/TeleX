@@ -1,0 +1,86 @@
+QueryButton: Query
+ResponseButton: Response
+MatchButton: Match
+UnmatchButton: Unmatch
+HelpButton: Help
+YesButton: "Yes"
+NoButton: "No"
+BackButton: Back
+WelcomeMsg: |
+    Welcome to %PLATFORM_NAME%, %USER_FIRST_NAME%!
+    %PLATFORM% is a platform to match buyers and sellers anonymously. 
+    Buyers can communicate with sellers without revealing their identiies.
+    For buyers, please send your request through /%QUERY_BUTTON%.
+    For sellers, please also subscribe channel @%CHANNEL_NAME%.
+AskTargetIDMsg: |
+    Please input your target ID.
+AskQueryMsg: |
+    Please input your query.
+AskResponseMsg: |
+    Please input your response. 
+AskHelpMsg: |
+    Please tell us your inquiries or feedback. We'll get you back as soon as possible
+AskConfirmQueryMsg: |
+    Please confirm to send out the following query.
+    "%MESSAGE%"
+AskConfirmResponseMsg: |
+    Please confirm to send out the following response to target ID (%TARGET_ID%).
+    "%MESSAGE%"    
+AskConfirmMatchMsg: |
+    Please confirm to match with target ID (%TARGET_ID%).
+AskConfirmUnmatchMsg: |
+    Please confirm to unmatch with target ID (%TARGET_ID%).    
+AskConfirmHelpMsg: |
+    Please confirm to send out the following inquiry or feedback to our team.
+    "%MESSAGE%"        
+ConfirmQueryMsg: |
+    Query has been sent.
+    Source ID = %SOURCE_ID%
+    Query     = %MESSAGE%
+ConfirmResponseMsg: |
+    Response has been sent.
+    Target ID = %TARGET_ID%
+    Query     = %MESSAGE%
+ConfirmMatchMsg: |
+    Matching has been sent. 
+    Target ID = %TARGET_ID%
+    When the other side also sends out matching, the contact will be exchanged.
+ConfirmUnmatchMsg: |
+    Unmatching has been sent. 
+    Target ID = %TARGET_ID%
+    If it is a query, its responses will no longer be received.
+    If it is a private communication, the counterparty will not send message to you.
+ConfirmHelpMsg: |    
+    Your inquiry or feedback has been sent to our help desk.
+    Help ID = %SOURCE_ID%
+    Message = %MESSAGE%
+MatchAndWaitMsg: |
+    The counterparty %TARGET_ID% has not yet agreed to match
+    Your contact has not yet been forwarded
+    Once the counterparty agrees as well we will exchange the two contacts.
+MatchAndExchangeMsg: |
+    The following is the contact of target ID (%TARGET_ID%).
+BroadcastQueryMsg: |
+    Time      = %DATETIME%
+    Source ID = %SOURCE_ID%
+    Query     = %MESSAGE%
+BroadcastResponseMsg: |
+    Time      = %DATETIME%
+    Source ID = %SOURCE_ID%
+    Response  = %MESSAGE%    
+BroadcastHelpMsg: |
+    Time      = %DATETIME%
+    Channel   = %CHANNEL_NAME%
+    Source ID = %SOURCE_ID%
+    Chat ID   = %CHAT_ID%
+    Response  = %MESSAGE%        
+InvalidTargetIDMsg: |
+    Target ID (%TARGET_ID%) is closed or no longer valid.
+CancelMsg: |
+    Action has been cancelled.
+RejectMultiplyMatchMsg: |
+    Action matching target ID (%TARGET_ID%) has been sent.
+    Please wait for the opponent to send matching if you haven't received his/her contact.
+RejectMultiplyUnmatchMsg: |
+    Target ID (%TARGET_ID%) has been blocked.
+    If you still can receive the opponent's response. Please report to our team.
