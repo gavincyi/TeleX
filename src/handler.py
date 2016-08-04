@@ -153,7 +153,8 @@ class handler:
             # Send out message
             bot.sendMessage(local_chat_id,
                             text=reply_msg,
-                            reply_markup=self.ui.back_keyboard())
+                            reply_markup=self.ui.back_keyboard(),
+                            parse_mode=telegram.ParseMode.HTML)
         else:
             self.logger.debug("%s: No transition of %d from %d to %d (%s)" \
                               % (local_chat_id, trans, user_state_record.prev_state, expected_state, 
@@ -178,7 +179,8 @@ class handler:
         # Send out message
         bot.sendMessage(local_chat_id,
                         text=self.ui.welcome(update),
-                        reply_markup = self.ui.main_keyboard())
+                        reply_markup = self.ui.main_keyboard(),
+                        parse_mode=telegram.ParseMode.HTML)
 
     def query_handler(self, bot, update):
         """
@@ -271,7 +273,8 @@ class handler:
         # Send out message
         bot.sendMessage(local_chat_id,
                         text=self.ui.cancel(update),
-                        reply_markup=telegram.ReplyKeyboardHide())
+                        reply_markup=telegram.ReplyKeyboardHide(),
+                        parse_mode=telegram.ParseMode.HTML)
         self.start_handler(bot, update)
 
     def query_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
@@ -307,14 +310,16 @@ class handler:
                         text=self.ui.confirm_query(update,
                                                     message_record.source_id,
                                                     message_record.msg),
-                        reply_markup=telegram.ReplyKeyboardHide())
+                        reply_markup=telegram.ReplyKeyboardHide(),
+                        parse_mode=telegram.ParseMode.HTML)
 
         # Change the state of the user first
         self.start_handler(bot, update)
 
         # Broadcast it in the channel
         bot.sendMessage(self.channel_name,
-                        text=self.ui.broadcast_query(update, message_record))
+                        text=self.ui.broadcast_query(update, message_record),
+                        parse_mode=telegram.ParseMode.HTML)
 
     def response_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
         message_record = self.get_last_message(user_state_record.last_msg_id)
@@ -342,7 +347,8 @@ class handler:
                 # The channel has been closed
                 bot.sendMessage(local_chat_id,
                                 text=self.ui.invalid_target_id(update, user_state_record.last_target_id),
-                                reply_markup=telegram.ReplyKeyboardHide())
+                                reply_markup=telegram.ReplyKeyboardHide(),
+                                parse_mode=telegram.ParseMode.HTML)
                 self.no_handler(bot,update)
                 return                
         else:
@@ -381,7 +387,8 @@ class handler:
             else:
                 bot.sendMessage(local_chat_id,
                                 text=self.ui.invalid_target_id(update, user_state_record.last_target_id),
-                                reply_markup=telegram.ReplyKeyboardHide())
+                                reply_markup=telegram.ReplyKeyboardHide(),
+                                parse_mode=telegram.ParseMode.HTML)
                 self.no_handler(bot,update)
                 return
 
@@ -398,14 +405,16 @@ class handler:
                         text=self.ui.confirm_response(update, 
                                                     user_state_record.last_target_id, 
                                                     message_record.msg),
-                        reply_markup=telegram.ReplyKeyboardHide())
+                        reply_markup=telegram.ReplyKeyboardHide(),
+                        parse_mode=telegram.ParseMode.HTML)
 
         # Change the state of the user first
         self.start_handler(bot, update)
 
         # Send it back to the target id
         bot.sendMessage(int(target_chat_id),
-                        text=self.ui.broadcast_response(update, message_record))
+                        text=self.ui.broadcast_response(update, message_record),
+                        parse_mode=telegram.ParseMode.HTML)
 
     def match_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
         row = self.database_client.selectone(self.database_client.channels_table_name,
@@ -425,7 +434,8 @@ class handler:
                 # Matched before
                 bot.sendMessage(local_chat_id,
                                 text=self.ui.reject_multiply_match(update, user_state_record.last_target_id),
-                                reply_markup=telegram.ReplyKeyboardHide())
+                                reply_markup=telegram.ReplyKeyboardHide(),
+                                parse_mode=telegram.ParseMode.HTML)
                 self.no_handler(bot, update)
                 return
 
@@ -457,14 +467,16 @@ class handler:
                                  % (channel_record.source_id, channel_record.target_chat_id))
                 bot.sendMessage(local_chat_id,
                                 text=self.ui.invalid_target_id(update, user_state_record.last_target_id),
-                                reply_markup=telegram.ReplyKeyboardHide())
+                                reply_markup=telegram.ReplyKeyboardHide(),
+                                parse_mode=telegram.ParseMode.HTML)
                 self.no_handler(bot, update)
                 return
 
             # Confirm matching
             bot.sendMessage(local_chat_id,
                             text=self.ui.confirm_match(update, user_state_record.last_target_id),
-                            reply_markup=telegram.ReplyKeyboardHide())
+                            reply_markup=telegram.ReplyKeyboardHide(),
+                            parse_mode=telegram.ParseMode.HTML)
 
             if channel_record_reverse.match == 1:
                 # Both matched
@@ -478,21 +490,24 @@ class handler:
                     self.logger.warn("Error in getting contact.\nChatID=%s" % channel_record.target_chat_id)
                     bot.sendMessage(local_chat_id,
                                     text=self.ui.invalid_target_id(update, user_state_record.last_target_id),
-                                    reply_markup=telegram.ReplyKeyboardHide())
-                    self.no_handler(bot, update)                                    
+                                    reply_markup=telegram.ReplyKeyboardHide(),
+                                    parse_mode=telegram.ParseMode.HTML)
+                    self.no_handler(bot, update)
                     return
 
                 # Exchanging contact
                 bot.sendMessage(local_chat_id,
                                 text=self.ui.match_and_exchange(update, channel_record.target_id),
-                                reply_markup=telegram.ReplyKeyboardHide())
+                                reply_markup=telegram.ReplyKeyboardHide(),
+                                parse_mode=telegram.ParseMode.HTML)
                 bot.sendContact(local_chat_id,
                                 phone_number=contact_record_counterparty.phone_number,
                                 first_name=contact_record_counterparty.first_name,
                                 last_name=contact_record_counterparty.last_name)
                 bot.sendMessage(int(contact_record_counterparty.chat_id),
                                 text=self.ui.match_and_exchange(update, channel_record.source_id),
-                                reply_markup=telegram.ReplyKeyboardHide())
+                                reply_markup=telegram.ReplyKeyboardHide(),
+                                parse_mode=telegram.ParseMode.HTML)
                 bot.sendContact(int(contact_record_counterparty.chat_id),
                                 phone_number=contact_record.phone_number,
                                 first_name=contact_record.first_name,
@@ -500,11 +515,13 @@ class handler:
             else:
                 bot.sendMessage(local_chat_id,
                                 text=self.ui.match_and_wait(update, user_state_record.last_target_id),
-                                reply_markup=telegram.ReplyKeyboardHide())
+                                reply_markup=telegram.ReplyKeyboardHide(),
+                                parse_mode=telegram.ParseMode.HTML)
 
         else:
             bot.sendMessage(local_chat_id,
-                            text=self.ui.invalid_target_id(update, user_state_record.last_target_id))
+                            text=self.ui.invalid_target_id(update, user_state_record.last_target_id),
+                            parse_mode=telegram.ParseMode.HTML)
             self.no_handler(bot, update)
             return
 
@@ -545,7 +562,8 @@ class handler:
             # Confirm user
             bot.sendMessage(local_chat_id,
                             text=self.ui.confirm_unmatch(update, user_state_record.last_target_id),
-                            reply_markup=telegram.ReplyKeyboardHide())
+                            reply_markup=telegram.ReplyKeyboardHide(),
+                            parse_mode=telegram.ParseMode.HTML)
 
         else:
             row = self.database_client.selectone(self.database_client.channels_table_name,
@@ -561,7 +579,8 @@ class handler:
                     # Closed before
                     bot.sendMessage(local_chat_id,
                                     text=self.ui.reject_multiply_unmatch(update, user_state_record.last_target_id),
-                                    reply_markup=telegram.ReplyKeyboardHide())
+                                    reply_markup=telegram.ReplyKeyboardHide(),
+                                    parse_mode=telegram.ParseMode.HTML)
                     self.no_handler(bot, update)
                     return
                 else:
@@ -573,12 +592,14 @@ class handler:
                     # Confirm user
                     bot.sendMessage(local_chat_id,
                                     text=self.ui.confirm_unmatch(update, user_state_record.last_target_id),
-                                    reply_markup=telegram.ReplyKeyboardHide())
+                                    reply_markup=telegram.ReplyKeyboardHide(),
+                                    parse_mode=telegram.ParseMode.HTML)
             else:
                 # Invalid target id
                 bot.sendMessage(local_chat_id,
                                 text=self.ui.invalid_target_id(update, user_state_record.last_target_id),
-                                reply_markup=telegram.ReplyKeyboardHide())
+                                reply_markup=telegram.ReplyKeyboardHide(),
+                                parse_mode=telegram.ParseMode.HTML)
                 self.no_handler(bot, update)
                 return
 
@@ -618,14 +639,16 @@ class handler:
                         text=self.ui.confirm_help(update, 
                                                 message_record.source_id,
                                                 message_record.msg),
-                        reply_markup=telegram.ReplyKeyboardHide())
+                        reply_markup=telegram.ReplyKeyboardHide(),
+                        parse_mode=telegram.ParseMode.HTML)
 
         # Change the state of the user first
         self.start_handler(bot, update)
 
         # Broadcast it in the channel
         bot.sendMessage(self.help_channel_name,
-                        text=self.ui.broadcast_help(update, message_record))
+                        text=self.ui.broadcast_help(update, message_record),
+                        parse_mode=telegram.ParseMode.HTML)
 
     def set_value_handler(self, bot, update):
         """
@@ -672,7 +695,8 @@ class handler:
 
         bot.sendMessage(int(user_state_record.chat_id),
                         text=self.ui.ask_confirm_response(update, user_state_record.last_target_id, msg),
-                        reply_markup=self.ui.yes_no_keyboard())
+                        reply_markup=self.ui.yes_no_keyboard(),
+                        parse_mode=telegram.ParseMode.HTML)
 
     def response_msg_set_value_handler(self, bot, update, user_state_record):
         """
@@ -688,7 +712,8 @@ class handler:
             # Target id is not a positive integer
             bot.sendMessage(local_chat_id,
                             text=self.ui.invalid_target_id(update, update.message.text),
-                            reply_markup=telegram.ReplyKeyboardHide())
+                            reply_markup=telegram.ReplyKeyboardHide(),
+                            parse_mode=telegram.ParseMode.HTML)
             self.no_handler(bot, update)
             return
 
@@ -699,7 +724,8 @@ class handler:
 
         bot.sendMessage(update.message.chat_id,
                         text=self.ui.ask_response(update),
-                        reply_markup=self.ui.back_keyboard())
+                        reply_markup=self.ui.back_keyboard(),
+                        parse_mode=telegram.ParseMode.HTML)
 
     def query_set_value_handler(self, bot, update, user_state_record):
         """
@@ -730,7 +756,8 @@ class handler:
         # Acknowledge the demand
         bot.sendMessage(update.message.chat_id,
                         text=self.ui.ask_confirm_query(update, question),
-                        reply_markup=self.ui.yes_no_keyboard())
+                        reply_markup=self.ui.yes_no_keyboard(),
+                        parse_mode=telegram.ParseMode.HTML)
 
     def match_confirm_set_value_handler(self, bot, update, user_state_record):
         local_chat_id = update.message.chat_id
@@ -740,7 +767,8 @@ class handler:
             # Target id is not a positive integer
             bot.sendMessage(local_chat_id,
                             text=self.ui.invalid_target_id(update, update.message.text),
-                            reply_markup=telegram.ReplyKeyboardHide())
+                            reply_markup=telegram.ReplyKeyboardHide(),
+                            parse_mode=telegram.ParseMode.HTML)
             self.no_handler(bot, update)
             return
 
@@ -752,7 +780,8 @@ class handler:
         # Ask to confirm
         bot.sendMessage(update.message.chat_id,
                         text=self.ui.ask_confirm_match(update, target_id),
-                        reply_markup=self.ui.yes_contact_no_keyboard())
+                        reply_markup=self.ui.yes_contact_no_keyboard(),
+                        parse_mode=telegram.ParseMode.HTML)
 
     def unmatch_confirm_set_value_handler(self, bot, update, user_state_record):
         local_chat_id = update.message.chat_id
@@ -762,7 +791,8 @@ class handler:
             # Target id is not a positive integer
             bot.sendMessage(local_chat_id,
                             text=self.ui.invalid_target_id(update, update.message.text),
-                            reply_markup=telegram.ReplyKeyboardHide())
+                            reply_markup=telegram.ReplyKeyboardHide(),
+                            parse_mode=telegram.ParseMode.HTML)
             self.no_handler(bot, update)
             return
 
@@ -773,7 +803,8 @@ class handler:
 
         bot.sendMessage(update.message.chat_id,
                         text=self.ui.ask_confirm_unmatch(update, target_id),
-                        reply_markup=self.ui.yes_no_keyboard())
+                        reply_markup=self.ui.yes_no_keyboard(),
+                        parse_mode=telegram.ParseMode.HTML)
 
     def help_confirm_set_value_handler(self, bot, update, user_state_record):
         """
@@ -804,4 +835,5 @@ class handler:
         # Acknowledge the demand
         bot.sendMessage(update.message.chat_id,
                         text=self.ui.ask_confirm_help(update, question),
-                        reply_markup=self.ui.yes_no_keyboard())
+                        reply_markup=self.ui.yes_no_keyboard(),
+                        parse_mode=telegram.ParseMode.HTML)

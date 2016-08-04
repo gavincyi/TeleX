@@ -22,7 +22,7 @@ class config_test(unittest.TestCase):
                                 'TeleXHelpChannel',
                                 os.path.abspath(__file__+ "/../../test/user_interface_fail_test.yaml"))        
             self.assertEqual(1, 2)
-        except SystemError, se:
+        except SystemError as se:
             s = "The following fields are missing in user interface:\n"
             missing_fields = user_interface.mandatory_messages()
             missing_fields.remove('QueryButton')
