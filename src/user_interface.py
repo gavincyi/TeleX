@@ -4,6 +4,14 @@ import yaml
 import telegram
 
 class user_interface():
+    class keyboard:
+        HIDDEN = 0
+        NO_EFFECT = 1
+        START = 2
+        BACK = 3
+        YES_NO = 4
+        YES_CONTACT_NO = 5
+
     def __init__(self, platform, channel_name, file_path):
         self.platform = platform            # Platform name
         self.channel_name = channel_name    # Broadcast channel name
@@ -57,6 +65,29 @@ class user_interface():
                 "RejectMultiplyMatchMsg",
                 "RejectMultiplyUnmatchMsg"
                 ]
+
+    def send_message(self, bot, chat_id, text, keyboard=keyboard.HIDDEN):
+        if keyboard == user_interface.keyboard.START:
+            keyboard = self.main_keyboard()
+        elif keyboard == user_interface.keyboard.HIDDEN:
+            keyboard = user_interface.hidden_keyboard()
+        elif keyboard == user_interface.keyboard.BACK:
+            keyboard = self.back_keyboard()
+        elif keyboard == user_interface.keyboard.YES_NO:
+            keyboard = self.yes_no_keyboard()
+        elif keyboard == user_interface.keyboard.YES_CONTACT_NO:
+            keyboard = self.yes_contact_no_keyboard()
+
+        if keyboard == user_interface.keyboard.NO_EFFECT:
+            bot.sendMessage(chat_id,
+                            text=text,
+                            parse_mode=telegram.ParseMode.HTML)
+        else:
+            bot.sendMessage(chat_id,
+                            text=text,
+                            reply_markup=keyboard,
+                            parse_mode=telegram.ParseMode.HTML)
+
                 
     def substitute(self, msg_type, update=None, source_id=None, 
                    target_id=None, msg=None, date_time=None, chat_id=None):
@@ -104,6 +135,12 @@ class user_interface():
     #####################################################################
     def ask_target_id(self, update):
         return self.substitute('AskTargetIDMsg', update=update)
+
+    def send_ask_target_id(self, bot, update, local_chat_id):
+        bot.sendMessage(local_chat_id,
+                        text=self.ask_target_id(update),
+                        reply_markup=self.back_keyboard(),
+                        parse_mode=telegram.ParseMode.HTML)
 
     def ask_query(self, update):
         return self.substitute('AskQueryMsg', update=update)
@@ -287,5 +324,8 @@ class user_interface():
 
     def yes_contact_no_keyboard(self): 
         return telegram.ReplyKeyboardMarkup(
-                 [[telegram.KeyboardButton(text=self.yes_key_name(),request_contact=True), self.no_key_name()]])                 
-        
+                 [[telegram.KeyboardButton(text=self.yes_key_name(),request_contact=True), self.no_key_name()]])
+
+    @staticmethod
+    def hidden_keyboard():
+        return telegram.ReplyKeyboardHide()

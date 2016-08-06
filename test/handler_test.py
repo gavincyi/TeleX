@@ -62,18 +62,19 @@ class bot_test():
     
     def __init__(self):
         self.msg_map = {}
+        self.keyboard_map = {}
     def sendMessage(self, chat_id, text, parse_mode=None, disable_web_page_preview=None, **kwargs):
-        if chat_id in self.msg_map.keys():
-            self.msg_map[chat_id].append(text)
-        else:
-            self.msg_map[chat_id] = [text]
-            
+        self.msg_map.setdefault(str(chat_id), []).append(text)
+        self.keyboard_map.setdefault(str(chat_id), None)
+        if "reply_markup" in kwargs.keys() and hasattr(kwargs["reply_markup"], 'keyboard'):
+            self.keyboard_map[str(chat_id)] = kwargs["reply_markup"].keyboard
+
     def sendContact(self, chat_id=0, phone_number='', first_name='', last_name=''):
         text = bot_test.contact_str(phone_number, first_name, last_name)
         if chat_id in self.msg_map.keys():
-            self.msg_map[chat_id].append(text)
+            self.msg_map[str(chat_id)].append(text)
         else:
-            self.msg_map[chat_id] = [text]        
+            self.msg_map[str(chat_id)] = [text]
 
     def clear_msg_map(self):
         self.msg_map.clear()
@@ -102,12 +103,12 @@ class handler_test(unittest.TestCase):
         cls.hd = handler(handler_test.logger, handler_test.conf, handler_test.ui)
         cls.hd.init_db(cls.db)
 
-        cls.my_chat_id = 12345678
+        cls.my_chat_id = '12345678'
         cls.my_first_name = 'David'
         cls.my_last_name = 'Jones'
         cls.my_phone_number = '85291111111'
 
-        cls.his_chat_id = 87654321
+        cls.his_chat_id = '87654321'
         cls.his_first_name = 'Ken'
         cls.his_last_name = 'Johnson'
         cls.his_phone_number = '85297777777'
@@ -124,17 +125,20 @@ class handler_test(unittest.TestCase):
         self.hd.start_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], \
                          self.hd.ui.welcome(update))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_query_action(self, bot, update):
         self.hd.query_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.ask_query(update))
-        bot.clear_msg_map()        
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.back_keyboard().keyboard)
+        bot.clear_msg_map()
 
     def check_query_question(self, bot, update, query):
         self.hd.set_value_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.ask_confirm_query(update, query))
-        bot.clear_msg_map()    
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.yes_no_keyboard().keyboard)
+        bot.clear_msg_map()
         
     def check_query_confirm(self, bot, update, query):
         self.hd.yes_handler(bot, update)
@@ -144,49 +148,59 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[handler_test.conf.channel_name][0].split('\n')[1].split("=")[1].strip(), str(self.hd.source_id))
         self.assertEqual(bot.msg_map[handler_test.conf.channel_name][0].split('\n')[2].split("=")[0].strip(), "Query")
         self.assertEqual(bot.msg_map[handler_test.conf.channel_name][0].split('\n')[2].split("=")[1].strip(), query)
-        bot.clear_msg_map()        
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
+        bot.clear_msg_map()
         
     def check_response_action(self, bot, update):      
         self.hd.response_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.ask_target_id(update))
-        bot.clear_msg_map()        
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.back_keyboard().keyboard)
+        bot.clear_msg_map()
         
     def check_response_target_id(self, bot, update):
         self.hd.set_value_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.ask_response(update))
-        bot.clear_msg_map()    
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.back_keyboard().keyboard)
+        bot.clear_msg_map()
         
     def check_response_message(self, bot, update, target_id):
         self.hd.set_value_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], \
                          self.hd.ui.ask_confirm_response(update, target_id, update.message.text))
-        bot.clear_msg_map()    
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.yes_no_keyboard().keyboard)
+        bot.clear_msg_map()
         
     def check_response_confirm(self, bot, update, opp_update, target_id, response):
         self.hd.yes_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.confirm_response(update, target_id, response))
         self.assertEqual(bot.msg_map[update.message.chat_id][1], self.hd.ui.welcome(update))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
         self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split('\n')[1].split("=")[0].strip(), "Source ID")
         self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split('\n')[1].split("=")[1].strip(), str(self.hd.source_id))        
         self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split('\n')[2].split("=")[0].strip(), "Response")
-        self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split('\n')[2].split("=")[1].strip(), response)        
-        bot.clear_msg_map()    
+        self.assertEqual(bot.msg_map[opp_update.message.chat_id][0].split('\n')[2].split("=")[1].strip(), response)
+        self.assertEqual(bot.keyboard_map[opp_update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
+        bot.clear_msg_map()
         
     def check_target_id_decline(self, bot, update, target_id):
         self.hd.yes_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.invalid_target_id(update, target_id))
         self.assertEqual(bot.msg_map[update.message.chat_id][1], self.hd.ui.cancel(update))
         self.assertEqual(bot.msg_map[update.message.chat_id][2], self.hd.ui.welcome(update))
-        bot.clear_msg_map()          
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
+        bot.clear_msg_map()
         
     def check_match_action(self, bot, update):
         self.hd.match_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.ask_target_id(update))
-        bot.clear_msg_map()        
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.back_keyboard().keyboard)
+        bot.clear_msg_map()
         
     def check_match_target_id(self, bot, update):
         self.hd.set_value_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.ask_confirm_match(update, update.message.text))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id][0][0].text, self.hd.ui.yes_contact_no_keyboard().keyboard[0][0].text)
+        self.assertEqual(bot.keyboard_map[update.message.chat_id][0][1], self.hd.ui.yes_contact_no_keyboard().keyboard[0][1])
         bot.clear_msg_map()
         
     def check_match_one_side(self, bot, update, target_id):
@@ -194,7 +208,8 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.confirm_match(update, target_id))
         self.assertEqual(bot.msg_map[update.message.chat_id][1], self.hd.ui.match_and_wait(update, target_id))
         self.assertEqual(bot.msg_map[update.message.chat_id][2], self.hd.ui.welcome(update))
-        bot.clear_msg_map()       
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
+        bot.clear_msg_map()
     
     def check_match_two_side(self, bot, update, opp_update, target_id, source_id):
         self.hd.yes_handler(bot, update)
@@ -204,12 +219,14 @@ class handler_test(unittest.TestCase):
                          bot_test.contact_str(phone_number=opp_update.message.contact.phone_number,
                                               first_name=opp_update.message.contact.first_name,
                                               last_name=opp_update.message.contact.last_name))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
         self.assertEqual(bot.msg_map[update.message.chat_id][3], self.hd.ui.welcome(update))
         self.assertEqual(bot.msg_map[opp_update.message.chat_id][0], self.hd.ui.match_and_exchange(update, source_id))
         self.assertEqual(bot.msg_map[opp_update.message.chat_id][1], \
                          bot_test.contact_str(phone_number=update.message.contact.phone_number,
                                               first_name=update.message.contact.first_name,
                                               last_name=update.message.contact.last_name))
+        self.assertEqual(bot.keyboard_map[opp_update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_match_repeated_decline(self, bot, update, target_id):
@@ -217,23 +234,27 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.reject_multiply_match(update, target_id))
         self.assertEqual(bot.msg_map[update.message.chat_id][1], self.hd.ui.cancel(update))
         self.assertEqual(bot.msg_map[update.message.chat_id][2], self.hd.ui.welcome(update))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_unmatch_action(self, bot, update):
         self.hd.unmatch_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.ask_target_id(update))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.back_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_unmatch_target_id(self, bot, update):
         self.hd.set_value_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0],\
                          self.hd.ui.ask_confirm_unmatch(update, int(update.message.text)))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.yes_no_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_unmatch_confirm(self, bot, update, target_id):
         self.hd.yes_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0],\
                          self.hd.ui.confirm_unmatch(update, target_id))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_unmatch_repeated_decline(self, bot, update, target_id):
@@ -241,6 +262,7 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.reject_multiply_unmatch(update, target_id))
         self.assertEqual(bot.msg_map[update.message.chat_id][1], self.hd.ui.cancel(update))
         self.assertEqual(bot.msg_map[update.message.chat_id][2], self.hd.ui.welcome(update))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_invalid_target_id(self, bot, update, target_id):
@@ -248,16 +270,19 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.invalid_target_id(update, target_id))
         self.assertEqual(bot.msg_map[update.message.chat_id][1], self.hd.ui.cancel(update))
         self.assertEqual(bot.msg_map[update.message.chat_id][2], self.hd.ui.welcome(update))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_help_action(self, bot, update):
         self.hd.help_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.ask_help(update))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.back_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_help_question(self, bot, update, msg):
         self.hd.set_value_handler(bot, update)
         self.assertEqual(bot.msg_map[update.message.chat_id][0], self.hd.ui.ask_confirm_help(update, msg))
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.yes_no_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_help_confirm(self, bot, update, msg):
@@ -271,7 +296,8 @@ class handler_test(unittest.TestCase):
         self.assertEqual(bot.msg_map[handler_test.conf.help_channel_name][0].split('\n')[3].split("=")[0].strip(), "Chat ID")
         self.assertEqual(bot.msg_map[handler_test.conf.help_channel_name][0].split('\n')[3].split("=")[1].strip(), str(update.message.chat_id))
         self.assertEqual(bot.msg_map[handler_test.conf.help_channel_name][0].split('\n')[4].split("=")[0].strip(), "Response")
-        self.assertEqual(bot.msg_map[handler_test.conf.help_channel_name][0].split('\n')[4].split("=")[1].strip(), msg)                  
+        self.assertEqual(bot.msg_map[handler_test.conf.help_channel_name][0].split('\n')[4].split("=")[1].strip(), msg)
+        self.assertEqual(bot.keyboard_map[update.message.chat_id], self.hd.ui.main_keyboard().keyboard)
         bot.clear_msg_map()
 
     def check_query(self, bot, update, query):
