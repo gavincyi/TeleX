@@ -20,6 +20,11 @@ class config():
             try:
                 d = yaml.load(stream)
 
+                if 'platform' in d:
+                    self.platform = d['platform']
+                else:
+                    raise SystemError("Error: Platform is not found in the configuration file")
+                    
                 if 'api_token' in d:
                     self.api_token = d['api_token']
                 else:
@@ -53,4 +58,4 @@ class config():
                     raise SystemError("Error: Help channel name is not found in the configuration file")
 
             except yaml.YAMLError as exc:
-                print("Error in configuation initialization: %s" % exc)
+                raise SystemError("Error in configuation initialization: %s" % exc)

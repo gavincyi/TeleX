@@ -1,3 +1,4 @@
+platform: 'TeleXTest'
 api_token: '12345678'
 channel_name: 'TestingChannel'
 help_channel_name: 'TestingHelpChannel'
