@@ -53,7 +53,11 @@ The following python packages are required. Highly recommend to use pip to insta
 
 3.  Configuration
 
-  Set up the config.yaml. For details, please refer to section [Configuration](### Configuration)
+  Set up config.yaml. For details, please refer to section [Configuration](### Configuration)
+  
+4. User interface setup
+
+  Set up the user interface through user_interface.yaml.
 
 ### Configuration ###
 
@@ -66,6 +70,21 @@ The following python packages are required. Highly recommend to use pip to insta
 | log_path | Directory of log files. |
 | log_prefix | Prefix of the log file. The file name is \<log_prefix\>_\<today\>.log. |
 | db_path | Database directory. |
+
+### Start up
+For the first time to start the bot, please start the script with option "-m COLD", i.e.
+
+    python main.py -c <config_path> -i <user_interface_path> -m COLD
+
+The following options are supported during the process starting up.
+
+| Option | Mandatory | Description| 
+|:-----|:-----|:-----|
+| -c | Yes | The general configuration file |
+| -i | Yes | The user interface configuration file |
+| -m | No | The mode. Currently only supports value "COLD" |
+
+
 
 
 
