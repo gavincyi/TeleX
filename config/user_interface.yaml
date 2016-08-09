@@ -7,80 +7,82 @@ YesButton: "Yes"
 NoButton: "No"
 BackButton: Back
 WelcomeMsg: |
-    Welcome to %PLATFORM_NAME%, %USER_FIRST_NAME%!
-    %PLATFORM% is a platform to match buyers and sellers anonymously. 
+    <b>Welcome to %PLATFORM_NAME%, %USER_FIRST_NAME%!</b>
+    %PLATFORM_NAME% is a platform to match buyers and sellers anonymously.
     Buyers can communicate with sellers without revealing their identiies.
     For buyers, please send your request through /%QUERY_BUTTON%.
-    For sellers, please also subscribe channel @%CHANNEL_NAME%.
+    For sellers, please also subscribe channel %CHANNEL_NAME% and send /%RESPONSE_BUTTON% to reply.
+    You can send /%UNMATCH_BUTTON% to block any incoming responses.
+    If you are interested to contact the target, please send /%MATCH_BUTTON% to exchange contacts.
 AskTargetIDMsg: |
-    Please input your target ID.
+    <b>Please input the target ID.</b>
 AskQueryMsg: |
-    Please input your query.
+    <b>Please input your query.</b>
 AskResponseMsg: |
-    Please input your response. 
+    <b>Please input your response.</b>
 AskHelpMsg: |
-    Please tell us your inquiries or feedback. We'll get you back as soon as possible
+    <b>Please tell us your inquiries or feedback. We'll get you back as soon as possible</b>
 AskConfirmQueryMsg: |
-    Please confirm to send out the following query.
-    "%MESSAGE%"
+    <b>Please confirm to send out the following query.</b>
+    %MESSAGE%
 AskConfirmResponseMsg: |
-    Please confirm to send out the following response to target ID (%TARGET_ID%).
-    "%MESSAGE%"    
+    <b>Please confirm to send out the following response to target (%TARGET_ID%).</b>
+    %MESSAGE%
 AskConfirmMatchMsg: |
-    Please confirm to match with target ID (%TARGET_ID%).
+    <b>Please confirm to match with target (%TARGET_ID%).</b>
 AskConfirmUnmatchMsg: |
-    Please confirm to unmatch with target ID (%TARGET_ID%).    
+    <b>Please confirm to unmatch with target (%TARGET_ID%).</b>
 AskConfirmHelpMsg: |
-    Please confirm to send out the following inquiry or feedback to our team.
-    "%MESSAGE%"        
+    <b>Please confirm to send out the following inquiry or feedback to our team.</b>
+    %MESSAGE%
 ConfirmQueryMsg: |
-    Query has been sent.
-    Source ID = %SOURCE_ID%
-    Query     = %MESSAGE%
+    <b>Query has been sent.</b>
+    <b>ID:</b> %SOURCE_ID%
+    <b>Query:</b> %MESSAGE%
+    Your query has been broadcast in the channel %CHANNEL_NAME%.
+    At any time you can send /%UNMATCH_BUTTON% not to receive other responses anymore.
 ConfirmResponseMsg: |
-    Response has been sent.
-    Target ID = %TARGET_ID%
-    Query     = %MESSAGE%
+    <b>Response has been sent to target (%TARGET_ID%).</b>
+    <b>Response:</b> %MESSAGE%
 ConfirmMatchMsg: |
-    Matching has been sent. 
-    Target ID = %TARGET_ID%
+    <b>Matching has been sent to target (%TARGET_ID%).</b>
     When the other side also sends out matching, the contact will be exchanged.
 ConfirmUnmatchMsg: |
-    Unmatching has been sent. 
-    Target ID = %TARGET_ID%
+    <b>Unmatching has been sent to target (%TARGET_ID%)</b>
     If it is a query, its responses will no longer be received.
-    If it is a private communication, the counterparty will not send message to you.
-ConfirmHelpMsg: |    
-    Your inquiry or feedback has been sent to our help desk.
-    Help ID = %SOURCE_ID%
-    Message = %MESSAGE%
+    If it is a private communication, the target will not send message to you.
+ConfirmHelpMsg: |
+    <b>Your inquiry or feedback has been sent to our help desk.</b>
+    <b>ID:</b> %SOURCE_ID%
+    <b>Message:</b> %MESSAGE%
+    Our team will get back to you soon. Thanks so much for your input.
 MatchAndWaitMsg: |
-    The counterparty %TARGET_ID% has not yet agreed to match
-    Your contact has not yet been forwarded
-    Once the counterparty agrees as well we will exchange the two contacts.
+    <b>The target (%TARGET_ID%) has not yet agreed to match.</b>
+    Your contact has not yet been forwarded.
+    Once the target agrees as well we will exchange the two contacts.
 MatchAndExchangeMsg: |
-    The following is the contact of target ID (%TARGET_ID%).
+    <b>The following is the contact of target (%TARGET_ID%).</b>
 BroadcastQueryMsg: |
-    Time      = %DATETIME%
-    Source ID = %SOURCE_ID%
-    Query     = %MESSAGE%
+    <b>Query from source (%SOURCE_ID%).</b>
+    <b>Time:</b> %DATETIME%
+    <b>Query:</b> %MESSAGE%
 BroadcastResponseMsg: |
-    Time      = %DATETIME%
-    Source ID = %SOURCE_ID%
-    Response  = %MESSAGE%    
+    <b>Response from source (%SOURCE_ID%).</b>
+    <b>Time:</b> %DATETIME%
+    <b>Response:</b> %MESSAGE%
 BroadcastHelpMsg: |
-    Time      = %DATETIME%
-    Channel   = %CHANNEL_NAME%
-    Source ID = %SOURCE_ID%
-    Chat ID   = %CHAT_ID%
-    Response  = %MESSAGE%        
+    <b>Help from source (%SOURCE_ID).</b>
+    <b>Time:</b> %DATETIME%
+    <b>Channel:</b> %CHANNEL_NAME%
+    <b>Chat ID:</b> %CHAT_ID%
+    <b>Response:</b> %MESSAGE%
 InvalidTargetIDMsg: |
-    Target ID (%TARGET_ID%) is closed or no longer valid.
+    <b>Target (%TARGET_ID%) is closed or no longer valid.</b>
 CancelMsg: |
-    Action has been cancelled.
+    <b>Action has been cancelled.</b>
 RejectMultiplyMatchMsg: |
-    Action matching target ID (%TARGET_ID%) has been sent.
-    Please wait for the opponent to send matching if you haven't received his/her contact.
+    <b>Action matching target (%TARGET_ID%) has been sent.</b>
+    Please wait for the target to send matching if you haven't received his/her contact.
 RejectMultiplyUnmatchMsg: |
-    Target ID (%TARGET_ID%) has been blocked.
-    If you still can receive the opponent's response. Please report to our team.
+    <b>Target (%TARGET_ID%) has been blocked.</b>
+    If you still receive the response from the target. Please report to our team.
