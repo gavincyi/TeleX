@@ -71,7 +71,7 @@ BroadcastResponseMsg: |
     <b>Time:</b> %DATETIME%
     <b>Response:</b> %MESSAGE%
 BroadcastHelpMsg: |
-    <b>Help from source (%SOURCE_ID).</b>
+    <b>Help from source (%SOURCE_ID%).</b>
     <b>Time:</b> %DATETIME%
     <b>Channel:</b> %CHANNEL_NAME%
     <b>Chat ID:</b> %CHAT_ID%

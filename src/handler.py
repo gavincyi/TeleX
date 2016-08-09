@@ -309,7 +309,8 @@ class handler:
         self.start_handler(bot, update)
 
         # Broadcast it in the channel
-        self.ui.send_message(bot, self.channel_name, self.ui.broadcast_query(update, message_record))
+        self.ui.send_message(bot, self.channel_name, self.ui.broadcast_query(update, message_record),
+                             user_interface.keyboard.NO_EFFECT)
 
     def response_confirmed_yes_handler(self, bot, update, local_chat_id, user_state_record):
         message_record = self.get_last_message(user_state_record.last_msg_id)
