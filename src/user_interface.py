@@ -16,7 +16,7 @@ class user_interface():
         self.platform = platform            # Platform name
         self.channel_name = channel_name    # Broadcast channel name
         
-        with open(file_path) as stream:
+        with open(file_path, encoding='utf8') as stream:
             try:
                 self.console = yaml.load(stream)
                 

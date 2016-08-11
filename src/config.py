@@ -16,7 +16,7 @@ class config():
         self.db_path = ''
         self.help_channel_name = ''
 
-        with open(conf_file) as stream:
+        with open(conf_file, encoding='utf8') as stream:
             try:
                 d = yaml.load(stream)
 
