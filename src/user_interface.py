@@ -2,6 +2,7 @@
 
 import yaml
 import telegram
+from io import open
 
 class user_interface():
     class keyboard:
