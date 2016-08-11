@@ -4,6 +4,7 @@ import yaml
 import os
 import datetime
 import sys
+from io import open
 
 class config():
     def __init__(self, \
