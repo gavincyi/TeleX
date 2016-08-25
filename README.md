@@ -48,8 +48,7 @@ The following python packages are required. Highly recommend to use pip to insta
 
 2.  Install the dependency
 
-        pip install python-telegram-bot --upgrade
-        pip install pyyaml --upgrade
+        pip install -r requirement.txt
 
 3.  Configuration
 
